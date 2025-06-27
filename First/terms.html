@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EduTrack – Terms and Conditions</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* ------------ Reset & Global Styles ------------ */
+    :root {
+      --brand-red: #d32f2f;
+      --dark-text: #333;
+      --light-text: #555;
+    }
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* ------------ Stable Background ------------ */
+    body {
+      background-image: url('BACKG.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      padding: 2rem 1rem;
+    }
+
+    /* ------------ Glassmorphism Terms Card ------------ */
+    .terms-card {
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      max-width: 800px;
+      margin: 0 auto;
+      border-radius: 20px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      padding: 2rem 2.5rem;
+      animation: fade-slide-up 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+    }
+
+    /* ------------ Back Button ------------ */
+    .back-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        padding: 0.5rem 1rem;
+        border-radius: 8px;
+        color: var(--dark-text);
+        text-decoration: none;
+        font-weight: 600;
+        margin-bottom: 2rem;
+        transition: all 0.2s ease;
+    }
+    .back-button:hover {
+        background: #e0e0e0;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* ------------ Content Typography ------------ */
+    .terms-content h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--brand-red);
+      text-align: center;
+    }
+
+    .terms-content .app-info {
+        text-align: center;
+        color: var(--light-text);
+        font-weight: 500;
+        margin-bottom: 2rem;
+    }
+
+    .terms-content h2 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--dark-text);
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      border-left: 4px solid var(--brand-red);
+      padding-left: 0.75rem;
+    }
+    
+    .terms-content p, .terms-content li {
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--light-text);
+      margin-bottom: 1rem;
+    }
+
+    .terms-content ul {
+        list-style-position: inside;
+        padding-left: 0.5rem;
+    }
+    
+    .terms-content hr {
+        border: 0;
+        height: 1px;
+        background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(211, 47, 47, 0.5), rgba(0, 0, 0, 0));
+        margin: 2rem 0;
+    }
+
+    .terms-content .contact-info {
+        background: #f9f9f9;
+        border: 1px solid #eee;
+        border-left: 4px solid var(--brand-red);
+        padding: 1rem 1.5rem;
+        border-radius: 8px;
+        margin-top: 1rem;
+    }
+    
+    /* ------------ Keyframe Animations ------------ */
+    @keyframes fade-slide-up {
+      0% { opacity: 0; transform: translateY(30px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="terms-card">
+    <a href="signup.html" class="back-button">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back to Sign Up</span>
+    </a>
+    <div class="terms-content">
+      <h1>Terms and Conditions</h1>
+      <p class="app-info">
+        <strong>App Name:</strong> EduTrack <br/>
+        <strong>Company Name:</strong> New Gen Pioneers
+      </p>
+
+      <p>Welcome to EduTrack! These Terms and Conditions (“Terms”) govern your use of the EduTrack mobile application provided by New Gen Pioneers (“we,” “our,” or “us”). By accessing or using EduTrack, you agree to follow these Terms. If you do not agree, please do not use the app.</p>
+
+      <hr>
+
+      <h2>1. Use of the App</h2>
+      <p>EduTrack is a mobile application that helps users in the Philippines search for and explore schools based on their location and preferences. Anyone may use the app, including students and parents, provided they agree to these Terms.</p>
+
+      <hr>
+      
+      <h2>2. Account Registration</h2>
+      <p>To use EduTrack’s features fully, you must create an account. During registration, we collect the following information:</p>
+      <ul>
+          <li>A valid email address</li>
+          <li>A mobile phone number</li>
+          <li>Your current city and province in the Philippines</li>
+      </ul>
+      <p>You are responsible for ensuring the accuracy of this information and for keeping your login details secure.</p>
+
+      <hr>
+
+      <h2>3. Privacy and Data Collection</h2>
+      <p>By using EduTrack, you agree to the collection and use of your personal data, which may include:</p>
+      <ul>
+          <li><strong>Email Address</strong> – For account setup, communication, and important updates</li>
+          <li><strong>Phone Number</strong> – For verification and security purposes</li>
+          <li><strong>Location (City and Province)</strong> – To provide accurate, location-based school results</li>
+      </ul>
+      <p>We value your privacy and handle your data in accordance with the Data Privacy Act of 2012 (RA 10173). Your information will not be shared with third parties without your consent, unless required by law. For more information, please see our Privacy Policy.</p>
+      
+      <hr>
+
+      <h2>4. User Conduct</h2>
+      <p>As a user of EduTrack, you agree that you will:</p>
+      <ul>
+          <li>Use the app only for its intended purpose</li>
+          <li>Provide accurate and truthful information</li>
+          <li>Not attempt to access or tamper with other users’ data</li>
+          <li>Not misuse, disrupt, or damage the app or its services</li>
+      </ul>
+
+      <hr>
+
+      <h2>5. Intellectual Property</h2>
+      <p>All content within EduTrack—including logos, design, data, and features—is the property of New Gen Pioneers and protected by Philippine intellectual property laws. You may not copy, distribute, or reuse any content without our written permission.</p>
+
+      <hr>
+
+      <h2>6. Termination</h2>
+      <p>New Gen Pioneers reserves the right to suspend or terminate your access to EduTrack at any time if you violate these Terms or misuse the platform.</p>
+
+      <hr>
+
+      <h2>7. Disclaimer</h2>
+      <p>While we strive to provide updated and reliable information about schools, EduTrack does not guarantee the absolute accuracy, completeness, or timeliness of school listings. Please verify any important information directly with the schools.</p>
+      
+      <hr>
+
+      <h2>8. Limitation of Liability</h2>
+      <p>New Gen Pioneers will not be liable for any indirect, incidental, or consequential damages arising from the use—or inability to use—the app, including decisions made based on the information provided in EduTrack.</p>
+
+      <hr>
+
+      <h2>9. Changes to the Terms</h2>
+      <p>We may update these Terms from time to time. If changes are significant, we will notify you through the app or via email. Your continued use of EduTrack means you accept the updated Terms.</p>
+
+      <hr>
+
+      <h2>10. Contact Us</h2>
+      <p>For any questions or concerns, please contact:</p>
+      <div class="contact-info">
+          <p><strong>New Gen Pioneers</strong><br>
+          Phone: 0955 981 8897</p>
+      </div>
+
+      <hr>
+      
+      <p><strong>By creating an account or using EduTrack, you confirm that you have read, understood, and agreed to these Terms and Conditions.</strong></p>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Select Location</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      padding: 2rem;
+      background: #f7f7f7;
+    }
+    h2 {
+      color: #333;
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+      font-weight: bold;
+    }
+    select {
+      width: 100%;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    button {
+      margin-top: 2rem;
+      padding: 0.6rem 1rem;
+      background-color: #ffcc00;
+      border: none;
+      border-radius: 8px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #ffc107;
+    }
+  </style>
+</head>
+<body>
+  <h2>Select Your Location</h2>
+
+  <label for="region">Region</label>
+  <select id="region">
+    <option value="">Select Region</option>
+  </select>
+
+  <label for="province">Province</label>
+  <select id="province" disabled>
+    <option value="">Select Province</option>
+  </select>
+
+  <label for="city">City/Municipality</label>
+  <select id="city" disabled>
+    <option value="">Select City/Municipality</option>
+  </select>
+
+  <!-- Barangay Dropdown -->
+  <div class="form-group">
+    <label for="barangay">Barangay</label>
+    <select id="barangay" disabled>
+      <option value="">Select Barangay</option>
+    </select>
+  </div>
+
+  <button id="confirm-btn">Confirm</button>
+
+  <script>
+    async function loadLocations() {
+      try {
+        // 1. FETCH the JSON
+        const response = await fetch('ph-locations.json');
+        const data = await response.json();
+
+        // 2. GRAB the <select> elements BY THEIR ACTUAL IDs:
+        const regionEl   = document.getElementById('region');
+        const provinceEl = document.getElementById('province');
+        const cityEl     = document.getElementById('city');
+        const barangayEl = document.getElementById('barangay');
+        const confirmBtn = document.getElementById('confirm-btn');
+
+        // ────────────────
+        // (A) Populate Regions
+        // ────────────────
+        // data is keyed by region‐codes like "01", "02", etc.
+        Object.entries(data).forEach(([regionCode, regionObj]) => {
+          const opt = document.createElement('option');
+          opt.value       = regionCode;
+          opt.textContent = regionObj.region_name;
+          regionEl.appendChild(opt);
+        });
+
+        // ───────────────────────────────────────────────
+        // (B) When a Region is chosen → populate Provinces
+        // ───────────────────────────────────────────────
+        regionEl.addEventListener('change', () => {
+          const regionCode = regionEl.value;
+          console.log('🔹 Selected Region code:', regionCode);
+
+          // Look up the province_list object for that regionCode
+          const provincesObj = data[regionCode]?.province_list || {};
+          console.log('🔹 Provinces object:', provincesObj);
+
+          // Reset downstream dropdowns:
+          provinceEl.innerHTML = '<option value="">Select Province</option>';
+          cityEl.innerHTML     = '<option value="">Select City/Municipality</option>';
+          barangayEl.innerHTML = '<option value="">Select Barangay</option>';
+
+          provinceEl.disabled = false;
+          cityEl.disabled     = true;
+          barangayEl.disabled = true;
+
+          // Create <option> for each province name
+          Object.keys(provincesObj).forEach(provName => {
+            const opt = document.createElement('option');
+            opt.value       = provName;
+            opt.textContent = provName;
+            provinceEl.appendChild(opt);
+          });
+        });
+
+        // ─────────────────────────────────────────────────────
+        // (C) When a Province is chosen → populate Cities
+        // ─────────────────────────────────────────────────────
+        provinceEl.addEventListener('change', () => {
+          const regionCode = regionEl.value;
+          const provName   = provinceEl.value;
+          console.log('🔹 Selected Province:', provName);
+
+          // Look up the municipality_list for that region & province
+          const citiesObj = data[regionCode]
+                             ?.province_list?.[provName]
+                             ?.municipality_list || {};
+          console.log('🔹 Cities object:', citiesObj);
+
+          // Reset downstream:
+          cityEl.innerHTML     = '<option value="">Select City/Municipality</option>';
+          barangayEl.innerHTML = '<option value="">Select Barangay</option>';
+
+          cityEl.disabled     = false;
+          barangayEl.disabled = true;
+
+          // Create <option> for each city key
+          Object.keys(citiesObj).forEach(cityName => {
+            const opt = document.createElement('option');
+            opt.value       = cityName;
+            opt.textContent = cityName;
+            cityEl.appendChild(opt);
+          });
+        });
+
+        // ─────────────────────────────────────────────────────────
+        // (D) When a City is chosen → populate Barangays from JSON
+        // ─────────────────────────────────────────────────────────
+        cityEl.addEventListener('change', () => {
+          const regionCode = regionEl.value;
+          const provName   = provinceEl.value;
+          const cityName   = cityEl.value;
+
+          console.log('🔹 Selected City:', cityName);
+          console.log('🔹 Looking up path:',
+            `data[${regionCode}].province_list[${provName}].municipality_list[${cityName}].barangay_list`
+          );
+
+          // Reset Barangay dropdown
+          barangayEl.innerHTML = '<option value="">Select Barangay</option>';
+          barangayEl.disabled  = true;
+
+          // Pull out the barangay_list array
+          const barangayList = data[regionCode]
+                                 ?.province_list?.[provName]
+                                 ?.municipality_list?.[cityName]
+                                 ?.barangay_list;
+          console.log('🔹 Barangay array:', barangayList);
+
+          if (Array.isArray(barangayList) && barangayList.length > 0) {
+            barangayList.forEach(brgyName => {
+              const opt = document.createElement('option');
+              opt.value       = brgyName;
+              opt.textContent = brgyName;
+              barangayEl.appendChild(opt);
+            });
+            barangayEl.disabled = false;
+          }
+        });
+
+        // ─────────────────────────────────────────
+        // (E) Confirm → send everything back
+        // ─────────────────────────────────────────
+        confirmBtn.addEventListener('click', () => {
+          const regionCode   = regionEl.value;
+          const regionName   = data[regionCode]?.region_name;
+          const provName     = provinceEl.value;
+          const cityName     = cityEl.value;
+          const barangayName = barangayEl.value;
+
+          if (regionName && provName && cityName && barangayName) {
+            window.opener.postMessage(
+              { region: regionName, province: provName, city: cityName, barangay: barangayName },
+              '*'
+            );
+            window.close();
+          } else {
+            alert('Please select Region, Province, City/Municipality, and Barangay.');
+          }
+        });
+
+      } catch (err) {
+        console.error('❌ Failed to load JSON:', err);
+        alert('Could not load location data.');
+      }
+    }
+
+    // ───────────────────────────────────
+    // Kick everything off on page load
+    // ───────────────────────────────────
+    window.addEventListener('DOMContentLoaded', () => {
+      loadLocations();
+    });
+  </script>
+</body>
+</html>
