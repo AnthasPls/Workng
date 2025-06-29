@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EduTrack – Login</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* ------------ Reset & Global Styles ------------ */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* ------------ Stable Background ------------ */
+    body {
+      background-image: url('BACKG.jpg');
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+      overflow: hidden; /* Prevent scrollbars */
+    }
+
+    /* ------------ Logo & Tagline ------------ */
+    .brand {
+      text-align: center;
+      margin-bottom: 2rem;
+      animation: fade-slide-down 0.8s 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+    }
+    .brand img {
+      max-width: 300px;
+      display: block;
+      margin: 0 auto;
+      margin-top: -60px;
+      /* Added a drop-shadow to make the logo visible on any background */
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+    }
+    .brand p {
+      margin-top: 1rem;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 500;
+      /* Made the shadow stronger for better readability */
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    /* ------------ Glassmorphism Login Card ------------ */
+    .login-card {
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      max-width: 380px;
+      width: 100%;
+      border-radius: 25px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      padding: 2.5rem 2rem;
+      text-align: center;
+      animation: fade-slide-up 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+      transition: transform 0.5s ease, opacity 0.5s ease;
+    }
+    /* Outro animation for login */
+    .login-card.logging-in {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    .login-card h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      background: linear-gradient(90deg, #ff6b6b, #ff8e4d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: stagger-in 0.5s 0.8s backwards;
+    }
+
+    /* ------------ Floating Label Form ------------ */
+    .form-group {
+      margin-bottom: 1.5rem;
+      position: relative;
+      animation: stagger-in 0.5s 1s backwards;
+    }
+    /* Stagger the animation for each form element */
+    .form-group:nth-of-type(2) { animation-delay: 1.1s; }
+    .btn-login { animation: stagger-in 0.5s 1.2s backwards; }
+    .signup { animation: stagger-in 0.5s 1.3s backwards; }
+
+    .input-wrapper {
+        position: relative;
+    }
+    
+    .input-wrapper i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #e53935;
+        transition: color 0.3s ease;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 0.85rem 0.85rem 0.85rem 2.5rem;
+      font-size: 1rem;
+      border: 2px solid #e53935;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      background: rgba(255,255,255,0.5);
+      color: #333;
+    }
+
+    .form-group label {
+      position: absolute;
+      top: 50%;
+      left: 2.5rem;
+      transform: translateY(-50%);
+      color: #666;
+      font-weight: 500;
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+
+    .form-group input:focus + label,
+    .form-group input:not(:placeholder-shown) + label {
+      top: -10px;
+      left: 15px;
+      font-size: 0.8rem;
+      color: #d32f2f;
+      background-color: #fff;
+      padding: 0 5px;
+      border-radius: 4px;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #d32f2f;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(211, 47, 47, 0.3);
+    }
+    .form-group input:focus ~ i {
+        color: #d32f2f;
+    }
+
+    /* ------------ Animated Login Button ------------ */
+    .btn-login {
+      width: 100%;
+      padding: 0.85rem;
+      background: linear-gradient(90deg, #ff4d4d, #ff944d);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 1rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .btn-login:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 15px rgba(255, 100, 100, 0.4);
+    }
+    .btn-login:active {
+        transform: translateY(0);
+        box-shadow: none;
+    }
+    .btn-login::after {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: rgba(255, 255, 255, 0.2);
+        transform: rotate(45deg);
+        transition: all 0.5s ease;
+        opacity: 0;
+    }
+    .btn-login:hover::after {
+        left: 100%;
+        opacity: 1;
+    }
+
+    /* ------------ Footer Link ------------ */
+    .signup {
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: #555;
+      border-top: 1px solid #eee;
+      padding-top: 1.5rem;
+    }
+    .signup a {
+      color: #d32f2f;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .signup a:hover {
+      text-decoration: underline;
+    }
+
+    /* ------------ Keyframe Animations ------------ */
+    @keyframes fade-slide-down {
+      0% { opacity: 0; transform: translateY(-30px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fade-slide-up {
+      0% { opacity: 0; transform: translateY(30px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes stagger-in {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+  </style>
+  <script>
+    function handleLogin(evt) {
+      evt.preventDefault();
+      const card = document.querySelector('.login-card');
+      card.classList.add('logging-in');
+
+      setTimeout(() => {
+        window.location.href = 'MIN.html';
+      }, 500);
+    }
+  </script>
+</head>
+<body>
+
+  <div class="brand">
+    <img src="COMPANY.png" alt="EduTrack Logo">
+    <p>Your future school is just a few clicks away</p>
+  </div>
+
+  <div class="login-card">
+    <h1>Welcome Back!</h1>
+
+    <form onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <div class="input-wrapper">
+          <i class="fas fa-envelope"></i>
+          <input type="email" id="email" placeholder=" " required />
+          <label for="email">Email</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <div class="input-wrapper">
+          <i class="fas fa-lock"></i>
+          <input type="password" id="password" placeholder=" " required />
+          <label for="password">Password</label>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login">Log in</button>
+    </form>
+
+    <p class="signup">
+      Don’t have an account? <a href="signup.html">Sign up</a>
+    </p>
+  </div>
+
+</body>
+</html>
