@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EduTrack – Sign Up</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    /* ------------ Reset & Global Styles ------------ */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    /* ------------ Stable Background ------------ */
+    body {
+      background-image: url('BACKG.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 2rem 1rem;
+      min-height: 100vh;
+      height: auto;
+    }
+
+    /* ------------ Logo & Tagline ------------ */
+    .brand {
+      text-align: center;
+      margin-bottom: 2rem;
+      animation: fade-slide-down 0.8s 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+    }
+    .brand img {
+      max-width: 300px;
+      display: block;
+      margin: 0 auto;
+      margin-top: -30px;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+    }
+    .brand p {
+      margin-top: 1rem;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 500;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    }
+
+    /* ------------ Glassmorphism Signup Card ------------ */
+    .signup-card {
+      background: rgba(255, 255, 255, 0.3);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      max-width: 400px;
+      width: 100%;
+      border-radius: 25px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      text-align: center;
+      padding: 2.5rem 2rem;
+      animation: fade-slide-up 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+    }
+    
+    .signup-card h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 2rem;
+      background: linear-gradient(90deg, #ff6b6b, #ff8e4d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: stagger-in 0.5s 0.8s backwards;
+    }
+
+    /* ------------ Floating Label Form ------------ */
+    .form-group {
+      margin-bottom: 1.25rem;
+      position: relative;
+      animation: stagger-in 0.5s 1s backwards;
+    }
+    .form-group:nth-of-type(2) { animation-delay: 1.1s; }
+    .form-group:nth-of-type(3) { animation-delay: 1.2s; }
+    .form-group:nth-of-type(4) { animation-delay: 1.3s; }
+    .form-group:nth-of-type(5) { animation-delay: 1.4s; }
+    .form-group:nth-of-type(6) { animation-delay: 1.5s; }
+    .btn-signup { animation: stagger-in 0.5s 1.6s backwards; }
+    .login-link { animation: stagger-in 0.5s 1.7s backwards; }
+
+    .input-wrapper {
+        position: relative;
+    }
+    .input-wrapper i {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #e53935;
+        transition: color 0.3s ease;
+    }
+    .form-group input[type="text"],
+    .form-group input[type="email"],
+    .form-group input[type="password"],
+    .form-group input[type="tel"] {
+      width: 100%;
+      padding: 0.85rem 0.85rem 0.85rem 2.5rem;
+      font-size: 1rem;
+      border: 2px solid #e53935;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      background: rgba(255,255,255,0.5);
+      color: #333;
+    }
+
+    .form-group label {
+      position: absolute;
+      top: 50%;
+      left: 2.5rem;
+      transform: translateY(-50%);
+      color: #666;
+      font-weight: 500;
+      pointer-events: none;
+      transition: all 0.3s ease;
+    }
+    .form-group input:focus + label,
+    .form-group input:not(:placeholder-shown) + label {
+      top: -10px;
+      left: 15px;
+      font-size: 0.8rem;
+      color: #d32f2f;
+      background-color: #fff;
+      padding: 0 5px;
+      border-radius: 4px;
+    }
+    .form-group input:focus {
+      outline: none;
+      border-color: #d32f2f;
+      background-color: #fff;
+      box-shadow: 0 0 10px rgba(211, 47, 47, 0.3);
+    }
+    .form-group input:focus ~ i {
+        color: #d32f2f;
+    }
+    
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1rem;
+    }
+    .checkbox-group label {
+      color: #555;
+      font-weight: 500;
+      position: static;
+      transform: none;
+      pointer-events: auto;
+    }
+    .checkbox-group a { color: #d32f2f; text-decoration: none; font-weight: 600; }
+    .checkbox-group a:hover { text-decoration: underline; }
+    .checkbox-group input[type="checkbox"] {
+      margin-right: 0.5rem;
+      width: 1em;
+      height: 1em;
+    }
+    
+    .btn-signup {
+      width: 100%;
+      padding: 0.85rem;
+      background: linear-gradient(90deg, #ff4d4d, #ff944d);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 1rem;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .btn-signup:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 15px rgba(255, 100, 100, 0.4);
+    }
+
+    .login-link {
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      color: #555;
+      border-top: 1px solid #eee;
+      padding-top: 1.5rem;
+    }
+    .login-link a {
+      color: #d32f2f;
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .login-link a:hover {
+      text-decoration: underline;
+    }
+    
+    /* ------------ Modals ------------ */
+    .modal {
+        position: fixed; inset: 0;
+        background: rgba(0,0,0,0.6);
+        display: none; align-items: center; justify-content: center;
+        transition: opacity 0.3s ease; opacity: 0; z-index: 100;
+    }
+    .modal.show { display: flex; opacity: 1; }
+    .modal-content {
+        background: #fff;
+        padding: 2.5rem;
+        border-radius: 20px;
+        text-align: center;
+        border: 2px solid #d32f2f;
+        animation: pop-in 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        max-width: 90%;
+        width: 380px;
+    }
+    .done-icon-wrapper, .warning-icon-wrapper {
+        width: 80px; height: 80px;
+        border-radius: 50%;
+        margin: 0 auto 1.5rem auto;
+        display: flex; align-items: center; justify-content: center;
+        color: #fff; font-size: 3rem;
+    }
+    .done-icon-wrapper { background-color: #d32f2f; }
+    .warning-icon-wrapper { background-color: #d32f2f; }
+    
+    .modal-content h2 { font-size: 1.5rem; color: #333; margin-bottom: 0.75rem; }
+    .modal-content p { font-size: 1rem; color: #555; margin-bottom: 1.5rem; }
+    .modal-content button {
+        background: #d32f2f; color: white; border: none;
+        width: auto; padding: 0.6rem 1.5rem; border-radius: 8px;
+        font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+    }
+    .modal-content button:hover { transform: scale(1.05); }
+
+    /* ------------ Keyframe Animations ------------ */
+    @keyframes fade-slide-down {
+      0% { opacity: 0; transform: translateY(-30px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fade-slide-up {
+      0% { opacity: 0; transform: translateY(30px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes stagger-in {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pop-in {
+        from { opacity: 0; transform: scale(0.8); }
+        to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+
+  <script>
+    function showModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
+    }
+
+    function closeModal(id) {
+        const modal = document.getElementById(id);
+        if (modal) {
+            modal.classList.remove('show');
+            setTimeout(() => { modal.style.display = 'none'; }, 300);
+        }
+    }
+    
+    // NEW: Reusable function to show any warning
+    function showWarning(title, message) {
+        document.querySelector('#warningModal .modal-content h2').textContent = title;
+        document.querySelector('#warningModal .modal-content p').textContent = message;
+        showModal('warningModal');
+    }
+
+    function handleSignup(evt) {
+      evt.preventDefault();
+      
+      const textInputs = Array.from(evt.target.querySelectorAll('input[type="text"], input[type="email"], input[type="password"], input[type="tel"]'));
+      
+      // Validation 1: Check for empty fields
+      if (textInputs.some(input => !input.value.trim())) {
+        showWarning('Incomplete Form', 'Please make sure to fill out all fields.');
+        return;
+      }
+      
+      // Validation 2: Check if passwords match
+      if (document.getElementById('password').value !== document.getElementById('confirm').value) {
+        showWarning('Password Mismatch', 'The passwords you entered do not match. Please try again.');
+        return;
+      }
+      
+      // Validation 3: Check if Terms & Conditions are agreed to
+      if (!document.getElementById('agree').checked) {
+        showWarning('Terms & Conditions', 'You must agree to the Terms & Conditions to create an account.');
+        return;
+      }
+      
+      // If all checks pass, show success modal
+      showModal('successModal');
+
+      // Redirect after a delay
+      setTimeout(() => {
+        window.location.href = 'MIN.html';
+      }, 2000);
+    }
+  </script>
+</head>
+<body>
+
+  <div class="brand">
+    <img src="COMPANY.png" alt="EduTrack Logo">
+    <p>Your future school is just a few clicks away</p>
+  </div>
+
+  <div class="signup-card">
+    <h1>Create Your Account</h1>
+
+    <form onsubmit="handleSignup(event)">
+        <div class="form-group">
+            <div class="input-wrapper">
+                <i class="fas fa-user"></i>
+                <input type="text" id="name" placeholder=" " required />
+                <label for="name">Full Name</label>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="input-wrapper">
+                <i class="fas fa-envelope"></i>
+                <input type="email" id="email" placeholder=" " required />
+                <label for="email">Email Address</label>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="input-wrapper">
+                <i class="fas fa-lock"></i>
+                <input type="password" id="password" placeholder=" " required />
+                <label for="password">Create Password</label>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="input-wrapper">
+                <i class="fas fa-check-circle"></i>
+                <input type="password" id="confirm" placeholder=" " required />
+                <label for="confirm">Confirm Password</label>
+            </div>
+        </div>
+        <div class="form-group">
+            <div class="input-wrapper">
+                <i class="fas fa-phone"></i>
+                <input type="tel" id="phone" placeholder=" " required />
+                <label for="phone">Phone Number</label>
+            </div>
+        </div>
+        <div class="form-group checkbox-group">
+            <input type="checkbox" id="agree" />
+            <label for="agree">
+                I agree to the&nbsp;<a href="terms.html" target="_blank">Terms & Conditions</a>
+            </label>
+        </div>
+        <button type="submit" class="btn-signup">Create Account</button>
+    </form>
+
+    <p class="login-link">
+      Already have an account? <a href="login.html">Log In</a>
+    </p>
+  </div>
+
+  <div class="modal" id="successModal">
+    <div class="modal-content">
+        <div class="done-icon-wrapper">
+            <i class="fas fa-check"></i>
+        </div>
+        <h2>Signup Successful!</h2>
+    </div>
+  </div>
+  
+  <div class="modal" id="warningModal">
+    <div class="modal-content">
+        <div class="warning-icon-wrapper">
+            <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <h2></h2> 
+        <p></p>
+        <button onclick="closeModal('warningModal')">Got it</button>
+    </div>
+  </div>
+
+</body>
+</html>
