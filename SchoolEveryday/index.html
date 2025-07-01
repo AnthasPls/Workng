@@ -1,0 +1,2025 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>AcademiaOS</title>
+
+    <!-- PWA, SEO, and Mobile Meta -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0A1913" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#F8FAFC" media="(prefers-color-scheme: light)">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="A personal dashboard to manage your class schedule, tasks, and academic life.">
+    <link rel="apple-touch-icon" href="icon-192x192.png">
+
+    <!-- Fonts and Icons -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+    <!-- External Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/customParseFormat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/relativeTime.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/isBetween.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/isoWeek.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/weekday.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/localizedFormat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/localeData.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/isToday.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/isTomorrow.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1.11.10/plugin/isYesterday.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+
+    <style>
+        :root {
+            /* Default Theme: "Emerald Matrix" */
+            --bg-main: #0A1913; 
+            --bg-glass: rgba(10, 25, 19, 0.5);
+            --bg-glass-nav: rgba(10, 25, 19, 0.6);
+            --bg-modal: #0E241C;
+            --border-glass: rgba(0, 245, 212, 0.2); 
+            --border-ui: #1A3D32;
+            --text-primary: #E6FBF5;
+            --text-secondary: #88A099;
+            --accent-primary: #39FF14; 
+            --accent-primary-rgb: 57, 255, 20;
+            --accent-secondary: #00F5D4; 
+            --accent-secondary-rgb: 0, 245, 212;
+            --accent-red: #F43F5E;
+            --shadow-color: rgba(0, 0, 0, 0.5);
+            --font-family: 'Inter', sans-serif;
+            --font-family-clock: 'Orbitron', sans-serif;
+            --nav-height: 65px;
+            --border-radius: 1.25rem;
+            --border-radius-sm: 0.75rem;
+        }
+        
+        /* Animated Background & Background Image */
+        @keyframes matrix-flow {
+            0% { background-position: 0% 0%; }
+            100% { background-position: -200% -200%; }
+        }
+        body { 
+            position: relative; 
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-attachment: fixed;
+            background-color: var(--bg-main);
+            transition: background-image 0.5s ease, background-color 0.5s ease;
+        }
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            z-index: -1;
+            background-image: 
+                radial-gradient(rgba(var(--accent-primary-rgb), 0.1) 1px, transparent 1px),
+                radial-gradient(rgba(var(--accent-secondary-rgb), 0.1) 1px, transparent 1px);
+            background-size: 30px 30px, 30px 30px;
+            background-position: 0 0, 15px 15px;
+            animation: matrix-flow 120s linear infinite;
+            transition: background-image 0.5s ease;
+        }
+
+        /* FOUNDATION & LAYOUT */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body { font-family: var(--font-family); color: var(--text-primary); overflow: hidden; height: 100dvh; width: 100vw; display: flex; flex-direction: column; -webkit-font-smoothing: antialiased; }
+        main { flex-grow: 1; overflow: hidden; position: relative; }
+        .page { position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 1rem; padding-bottom: calc(var(--nav-height) + 2.5rem); overflow-y: auto; -webkit-overflow-scrolling: touch; opacity: 0; visibility: hidden; transition: opacity 0.25s ease; }
+        .page.active { opacity: 1; visibility: visible; z-index: 1; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; padding: 0 0.5rem; }
+        .page-title { font-size: 2rem; font-weight: 800; }
+        .page-content { display: flex; flex-direction: column; gap: 1rem; animation: slideUp 0.5s ease-out; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* RESPONSIVE NAVIGATION BAR */
+        .app-nav-wrapper { position: fixed; bottom: 1.5rem; left: 1rem; right: 1rem; z-index: 1000; pointer-events: none; }
+        @supports (padding-bottom: env(safe-area-inset-bottom)) { .app-nav-wrapper { bottom: calc(1.5rem + env(safe-area-inset-bottom)); } }
+        nav.app-nav { min-height: var(--nav-height); width: 100%; display: flex; flex-direction: row; background-color: var(--bg-glass-nav); backdrop-filter: blur(25px); -webkit-backdrop-filter: blur(25px); border-radius: var(--border-radius); border: 1px solid var(--border-glass); box-shadow: 0 10px 30px -10px var(--shadow-color); pointer-events: all; }
+        .nav-btn { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; background: none; border: none; color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease; gap: 2px; padding: 4px 0; border-radius: var(--border-radius-sm); }
+        .nav-btn.active, .nav-btn:hover { color: var(--accent-primary); text-shadow: 0 0 5px var(--accent-primary); }
+        .nav-btn i { font-size: 1.5rem; } 
+        .nav-btn .nav-text { font-family: var(--font-family); font-size: 0.65rem; font-weight: 500; }
+        
+        @media (min-width: 768px) {
+            body { flex-direction: row; }
+            main { padding-left: calc(var(--nav-height) + 1.5rem); }
+            .page { padding: 1.5rem; padding-bottom: 1.5rem; }
+            .app-nav-wrapper { top: 50%; left: 1.5rem; right: auto; bottom: auto; width: auto; transform: translateY(-50%); }
+            nav.app-nav { flex-direction: column; width: var(--nav-height); height: auto; padding: 0.5rem; gap: 0.5rem; }
+            .nav-btn { flex: 0 0 var(--nav-height); height: var(--nav-height); }
+            .nav-btn .nav-text { display: none; }
+            .toast-container { bottom: 2rem; left: calc(var(--nav-height) + 2.5rem); right: auto; align-items: flex-start;}
+        }
+
+        /* WIDGETS, CARDS, & BUTTONS */
+        .widget-card { padding: 1.25rem; background: var(--bg-glass); border-radius: var(--border-radius); border: 1px solid var(--border-glass); display: flex; flex-direction: column; transition: border-color 0.3s ease; }
+        .widget-card:hover { border-color: rgba(var(--accent-primary-rgb), 0.4); }
+        .widget-card h3 { font-size: 0.8rem; letter-spacing: 0.5px; font-weight: 600; margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center; color: var(--text-secondary); text-transform: uppercase; }
+        .home-widgets-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+        .live-status-banner { padding: 1rem; background: var(--bg-glass); border-radius: var(--border-radius); border: 1px solid var(--border-glass); }
+        .live-status-banner #status-text { font-weight: 700; display: flex; align-items: center; gap: 0.75rem; font-size: 1.1rem; }
+        .live-status-banner #status-indicator { width: 12px; height: 12px; border-radius: 50%; background-color: var(--text-secondary); transition: background-color 0.5s ease; }
+        .live-status-banner #status-indicator.live { background-color: var(--accent-primary); box-shadow: 0 0 10px var(--accent-primary); }
+        .live-status-banner #status-detail { font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem; }
+        .empty-placeholder { display: flex; flex-direction: column; justify-content: center; align-items: center; min-height: 150px; color: var(--text-secondary); text-align: center; padding: 1rem; }
+        .empty-placeholder i { font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.7; }
+        .btn {
+            background-image: linear-gradient(to right, rgba(var(--accent-secondary-rgb), 0.9), rgba(var(--accent-primary-rgb), 0.8));
+            color: #000; border: 1px solid rgba(var(--accent-primary-rgb), 0.5); padding: 0.75rem 1.25rem; border-radius: var(--border-radius-sm); font-weight: 700; cursor: pointer; transition: all 0.3s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; text-decoration: none; box-shadow: 0 4px 15px -5px rgba(var(--accent-primary-rgb), 0.4);
+        }
+        .btn:hover { filter: brightness(1.2); box-shadow: 0 6px 20px -5px rgba(var(--accent-primary-rgb), 0.6); transform: translateY(-2px); }
+        .btn:active { transform: scale(0.98) translateY(-1px); }
+        .btn-secondary { background: var(--bg-glass); color: var(--text-primary); border: 1px solid var(--border-ui); box-shadow: none; }
+        .btn-secondary:hover { background: var(--border-ui); border-color: var(--border-ui); }
+        .btn-danger { background: var(--accent-red); color: white; border: none; }
+        .btn-danger:hover { filter: brightness(1.1); }
+        .btn-ai { background-image: linear-gradient(to right, var(--accent-secondary), var(--accent-primary)); }
+        .btn-ai.loading { pointer-events: none; opacity: 0.7; }
+        .btn-ai .spinner { display: none; }
+        .btn-ai.loading .spinner { display: inline-block; width: 1em; height: 1em; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; }
+        .btn-ai.loading .btn-text { display: none; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* PROFILE WIDGET & MODAL */
+        #profile-widget { min-height: 200px; }
+        .level-display { font-size: 1.5rem; font-weight: 800; color: var(--accent-secondary); text-shadow: 0 0 10px rgba(var(--accent-secondary-rgb), 0.7); }
+        .xp-bar-container { width: 100%; background-color: rgba(0,0,0,0.3); border-radius: 99px; height: 10px; overflow: hidden; margin: 0.5rem 0; border: 1px solid var(--border-ui); }
+        .xp-bar { height: 100%; width: 0%; background-image: linear-gradient(to right, var(--accent-secondary), var(--accent-primary)); border-radius: 99px; transition: width 0.5s ease; box-shadow: 0 0 8px rgba(var(--accent-primary-rgb), 0.7); }
+        .xp-text { font-size: 0.8rem; color: var(--text-secondary); }
+        .btn-icon-header { font-size: 1rem; color: var(--text-secondary); cursor: pointer; background:none; border:none; padding:0; }
+        .btn-icon-header:hover { color: var(--accent-primary); text-shadow: 0 0 5px var(--accent-primary); }
+        .profile-details-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 1rem; font-size: 0.9rem; }
+        .profile-details-list li { display: flex; align-items: center; gap: 1rem; }
+        .profile-details-list i { color: var(--accent-secondary); font-size: 1.2rem; flex-shrink: 0; width: 24px; text-align: center;}
+        .profile-details-list div { display: flex; flex-direction: column; min-width: 0; }
+        .profile-details-list span { font-size: 0.75rem; color: var(--text-secondary); }
+        .profile-details-list strong { color: var(--text-primary); word-break: break-word; }
+
+        /* SCHEDULE, TASKS, & RESOURCES */
+        .schedule-day { margin-bottom: 1.5rem; }
+        .schedule-day h3 { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); border-bottom: 2px solid var(--border-ui); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+        .schedule-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
+        .schedule-class-item {
+            background-color: var(--bg-glass);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-glass);
+            border-top: 5px solid var(--subject-color, var(--accent-secondary));
+            padding: 1rem;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .schedule-class-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px -5px var(--shadow-color);
+            border-color: rgba(var(--accent-primary-rgb), 0.4);
+        }
+        .class-item-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+        .class-item-header i { font-size: 1.8rem; color: var(--subject-color, var(--accent-secondary)); }
+        .class-subject { font-weight: 700; font-size: 1.1rem; flex-grow: 1; }
+        .class-item-body { display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; color: var(--text-secondary); }
+        .class-time { font-weight: 600; font-size: 1rem; color: var(--text-primary); background: rgba(0,0,0,0.2); padding: 0.25rem 0.75rem; border-radius: var(--border-radius-sm); }
+        
+        .task-list, .resource-list { display: flex; flex-direction: column; gap: 0.75rem; }
+        .task-item, .resource-item { display: flex; align-items: center; gap: 1rem; padding: 1rem; background-color: var(--bg-glass); border: 1px solid var(--border-glass); border-radius: var(--border-radius-sm); flex-wrap: wrap; }
+        .task-item.completed .task-details { text-decoration: line-through; opacity: 0.6; }
+        .task-checkbox { width: 24px; height: 24px; border: 2px solid var(--border-ui); border-radius: 50%; display: grid; place-items: center; cursor: pointer; transition: all 0.2s ease; flex-shrink: 0; }
+        .task-item.completed .task-checkbox { background-color: var(--accent-primary); border-color: var(--accent-primary); color: var(--bg-main); box-shadow: 0 0 8px rgba(var(--accent-primary-rgb), 0.7); }
+        .task-checkbox i { font-size: 1rem; opacity: 0; transform: scale(0.5); transition: all 0.2s ease; }
+        .task-item.completed .task-checkbox i { opacity: 1; transform: scale(1); }
+        .task-details, .resource-details { flex-grow: 1; cursor: pointer; min-width: 0; }
+        .task-title, .resource-title { font-weight: 600; }
+        .resource-url { font-size: 0.85rem; color: var(--text-secondary); word-break: break-all; }
+        .task-meta { font-size: 0.85rem; color: var(--text-secondary); }
+        .task-due-date.overdue { color: var(--accent-red); font-weight: 600; }
+        
+        /* FORMS */
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; font-size: 0.9rem; }
+        .form-control { width: 100%; background-color: var(--bg-glass); border: 1px solid var(--border-ui); color: var(--text-primary); border-radius: var(--border-radius-sm); padding: 0.75rem; font-family: var(--font-family); font-size: 1rem; }
+        .form-control:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 3px rgba(var(--accent-primary-rgb), 0.3); }
+        .form-actions { display: flex; flex-flow: row wrap; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
+        .help-text { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.5rem; }
+
+        /* MODALS & LOADER */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); z-index: 2000; opacity: 0; visibility: hidden; transition: opacity 0.3s ease; display: flex; justify-content: center; align-items: center; padding: 1rem; }
+        .modal-overlay.visible { opacity: 1; visibility: visible; }
+        .modal-content { background-color: var(--bg-modal); border-radius: var(--border-radius); padding: 1.5rem; width: 100%; max-width: 500px; max-height: 90dvh; transform: scale(0.95); opacity: 0; transition: transform 0.3s ease, opacity 0.3s ease; display: flex; flex-direction: column; border: 1px solid var(--border-glass); }
+        .modal-overlay.visible .modal-content { transform: scale(1); opacity: 1; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-shrink: 0;}
+        .modal-title { font-size: 1.5rem; font-weight: 700; }
+        .modal-body { flex-grow: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+        .modal-tabs { display:flex; gap:0.5rem; border-bottom:1px solid var(--border-ui); margin-bottom:1rem; overflow-x: auto; flex-wrap: nowrap; }
+        .tab-btn { padding: 0.5rem 1rem; border: none; background: none; color: var(--text-secondary); font-weight: 600; cursor: pointer; position: relative; white-space: nowrap; }
+        .tab-btn.active { color: var(--accent-primary); text-shadow: 0 0 5px var(--accent-primary); }
+        .tab-btn.active::after { content: ''; position: absolute; bottom: -1px; left: 0; right: 0; height: 3px; background-color: var(--accent-primary); border-radius: 3px 3px 0 0; box-shadow: 0 0 8px rgba(var(--accent-primary-rgb), 0.7); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: slideUp 0.3s ease-out; }
+        #loader-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(5px); z-index: 9999; }
+        .loader { width: 60px; height: 60px; border-radius: 50%; border: 5px solid var(--border-ui); border-top-color: var(--accent-primary); animation: spin 1s linear infinite; box-shadow: 0 0 15px rgba(var(--accent-primary-rgb), 0.5); }
+
+        /* FEATURE-SPECIFIC STYLES */
+        #focus-timer-display { font-size: 5rem; font-weight: 800; letter-spacing: -3px; color: var(--accent-primary); text-shadow: 0 0 15px rgba(var(--accent-primary-rgb), 0.5); }
+        #focus-timer-task-title { font-size: 1.2rem; font-weight: 600; color: var(--text-primary); margin-bottom: 1.5rem; text-align: center; }
+        .budget-summary { display: flex; flex-direction: column; gap: 1rem; }
+        .budget-category { display: flex; flex-direction: column; gap: 0.5rem; }
+        .budget-category-header { display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
+        .progress-bar-container { width: 100%; height: 12px; background: rgba(0,0,0,0.3); border-radius: 99px; overflow: hidden; }
+        .progress-bar { height: 100%; background-image: linear-gradient(to right, var(--accent-secondary), var(--accent-primary)); border-radius: 99px; transition: width 0.5s ease; }
+        #study-session-body h1, #study-session-body h2 { border-bottom: 1px solid var(--border-ui); padding-bottom: 0.5rem; margin-bottom: 1rem; }
+        #study-session-body ul, #study-session-body ol { padding-left: 1.5rem; }
+        
+        /* CLOCK STYLES */
+        .clock-container { display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-family: var(--font-family-clock); min-height: 80px;}
+        .clock-segment { background: rgba(0,0,0,0.2); padding: 0.5rem 1rem; border-radius: var(--border-radius-sm); font-size: clamp(2rem, 10vw, 3rem); font-weight: 700; line-height: 1; }
+        .clock-colon { animation: blink 1s step-end infinite; font-size: 2.5rem; }
+        @keyframes blink { 50% { opacity: 0; } }
+        .analog-clock { width: 150px; height: 150px; border: 3px solid var(--text-primary); border-radius: 50%; position: relative; margin: 1rem auto; }
+        .analog-clock .hand { position: absolute; width: 50%; height: 2px; background: var(--text-primary); top: 50%; transform-origin: 100%; transform: rotate(90deg); }
+        .analog-clock .hour-hand { width: 30%; left: 20%; }
+        .analog-clock .minute-hand { width: 45%; left: 5%; }
+        .analog-clock .second-hand { width: 48%; left: 2%; height: 1px; background: var(--accent-primary); }
+        .text-clock { font-size: 1.5rem; text-align: center; line-height: 1.2; font-family: var(--font-family-clock); }
+        .binary-clock { display: flex; justify-content: center; gap: 1rem; }
+        .binary-col { display: flex; flex-direction: column-reverse; gap: 0.5rem; }
+        .binary-dot { width: 1rem; height: 1rem; border-radius: 50%; background: var(--border-ui); }
+        .binary-dot.on { background: var(--accent-primary); }
+        .flip-clock { display: flex; gap: 0.5rem; align-items: center; }
+        .flip-card { display: inline-flex; flex-direction: column; position: relative; width: 2.2ch; height: 1.2em; font-size: clamp(2rem, 8vw, 2.5rem); line-height: 1.2; }
+        .flip-card span { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.2); border-radius: var(--border-radius-sm); display: grid; place-items: center; border: 1px solid var(--border-ui); }
+        .dot-matrix-clock { display: grid; grid-template-columns: repeat(3, 4px); gap: 2px; }
+        .dot-matrix-clock .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--border-ui); transition: background-color 0.2s; }
+        .dot-matrix-clock .dot.on { background: var(--accent-primary); }
+        .radial-clock { display: flex; justify-content: center; align-items: center; position: relative; width: 150px; height: 150px; }
+        .radial-clock svg { position: absolute; top: 0; left: 0; transform: rotate(-90deg); }
+        .radial-clock circle { fill: transparent; stroke-width: 10; }
+        .radial-clock .bg-circle { stroke: var(--border-ui); }
+        .radial-clock .progress-circle { stroke: var(--accent-primary); transition: stroke-dashoffset 0.5s linear; }
+
+        /* TOAST NOTIFICATIONS */
+        .toast-container { position: fixed; bottom: calc(var(--nav-height) + 2.5rem); left: 1rem; right: 1rem; z-index: 3000; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; pointer-events: none; }
+        .toast { background-color: var(--bg-modal); color: var(--text-primary); padding: 1rem; border-radius: var(--border-radius-sm); border: 1px solid var(--border-glass); box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5); pointer-events: all; opacity: 0; transform: translateY(20px); transition: all 0.4s ease; display: flex; align-items: center; gap: 1rem; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+
+        /* SETTINGS PAGE STYLES */
+        .settings-section { padding: 1.25rem; background: var(--bg-glass); border-radius: var(--border-radius); border: 1px solid var(--border-glass); }
+        .settings-section h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border-ui); }
+        .theme-picker { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 1rem; }
+        .theme-option { cursor: pointer; border: 2px solid transparent; padding: 0.5rem; border-radius: var(--border-radius-sm); transition: border-color 0.2s ease; }
+        .theme-option.active { border-color: var(--accent-primary); }
+        .theme-preview { display: flex; height: 50px; border-radius: 0.5rem; overflow: hidden; border: 1px solid var(--border-ui); }
+        .theme-preview div { flex: 1; }
+        .theme-option p { text-align: center; font-weight: 500; margin-top: 0.5rem; font-size: 0.9rem; }
+        .toggle-switch { display: flex; align-items: center; }
+        .toggle-switch button { flex: 1; padding: 0.5rem; border: 1px solid var(--border-ui); background: transparent; color: var(--text-secondary); font-weight: 600; cursor: pointer; }
+        .toggle-switch button:first-child { border-radius: var(--border-radius-sm) 0 0 var(--border-radius-sm); }
+        .toggle-switch button:last-child { border-radius: 0 var(--border-radius-sm) var(--border-radius-sm) 0; }
+        .toggle-switch button.active { background: var(--accent-primary); color: var(--bg-main); border-color: var(--accent-primary); }
+        .category-list { display: flex; flex-direction: column; gap: 0.5rem; }
+        .category-item { display: flex; align-items: center; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 0.5rem 1rem; border-radius: var(--border-radius-sm); }
+        .delete-category-btn, .delete-link-btn { background: none; border: none; color: var(--accent-red); cursor: pointer; font-size: 1.2rem; }
+        .history-log { max-height: 300px; overflow-y: auto; padding-right: 1rem; }
+        
+        /* CUSTOM DROPDOWN */
+        .custom-dropdown { position: relative; }
+        .dropdown-trigger { width: 100%; background-color: var(--bg-glass); border: 1px solid var(--border-ui); color: var(--text-primary); border-radius: var(--border-radius-sm); padding: 0.75rem; font-family: var(--font-family); font-size: 1rem; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .dropdown-trigger::after { content: '▼'; font-size: 0.6rem; }
+        .dropdown-panel { position: absolute; top: 100%; left: 0; right: 0; background-color: var(--bg-modal); border: 1px solid var(--border-ui); border-radius: var(--border-radius-sm); z-index: 10; max-height: 200px; overflow-y: auto; opacity: 0; visibility: hidden; transform: translateY(-10px); transition: opacity 0.2s ease, transform 0.2s ease; }
+        .dropdown-panel.visible { opacity: 1; visibility: visible; transform: translateY(5px); }
+        .dropdown-option { padding: 0.75rem; cursor: pointer; }
+        .dropdown-option:hover { background-color: var(--border-ui); }
+
+        /* Date picker specific styles */
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; font-size: 1.2rem; font-weight: 600; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; text-align: center; }
+        .calendar-day-name { font-weight: 700; color: var(--accent-primary); }
+        .calendar-day { background-color: var(--bg-glass); border: 1px solid var(--border-ui); border-radius: var(--border-radius-sm); padding: 0.75rem 0.5rem; cursor: pointer; transition: all 0.2s ease; font-weight: 500; color: var(--text-primary); box-sizing: border-box; }
+        .calendar-day.selected { background-color: var(--accent-primary); color: var(--bg-main); box-shadow: 0 0 10px rgba(var(--accent-primary-rgb), 0.7); border-color: var(--accent-primary); }
+        .calendar-day.other-month { opacity: 0.5; pointer-events: none; }
+        .calendar-day:not(.selected):hover { background-color: var(--border-ui); }
+    </style>
+</head>
+<body>
+    <main>
+        <section id="home-page" class="page"></section>
+        <section id="schedule-page" class="page"></section>
+        <section id="finances-page" class="page"></section>
+        <section id="settings-page" class="page"></section>
+    </main>
+    
+    <div class="app-nav-wrapper">
+        <nav class="app-nav">
+            <button class="nav-btn" data-page="home-page"><i class="ph-fill ph-house"></i><span class="nav-text">Home</span></button>
+            <button class="nav-btn" data-page="schedule-page"><i class="ph-fill ph-calendar"></i><span class="nav-text">Schedule</span></button>
+            <button class="nav-btn" data-page="finances-page"><i class="ph-fill ph-wallet"></i><span class="nav-text">Finances</span></button>
+            <button class="nav-btn" data-page="settings-page"><i class="ph-fill ph-gear"></i><span class="nav-text">Settings</span></button>
+        </nav>
+    </div>
+
+    <!-- Modal Containers -->
+    <div id="class-hub-modal" class="modal-overlay"></div>
+    <div id="form-modal" class="modal-overlay"></div>
+    <div id="profile-details-modal" class="modal-overlay"></div>
+    <div id="date-picker-modal" class="modal-overlay"></div>
+    <div id="focus-timer-modal" class="modal-overlay"></div>
+    <div id="study-session-modal" class="modal-overlay"></div>
+    <div id="email-digest-modal" class="modal-overlay"></div>
+    <div id="confirm-modal" class="modal-overlay"></div>
+    <div id="loader-overlay" class="modal-overlay" style="display:none;"><div class="loader"></div></div>
+    <div id="toast-container" class="toast-container"></div>
+    
+    <script type="module">
+        // Initialize DayJS plugins
+        dayjs.extend(window.dayjs_plugin_customParseFormat);
+        dayjs.extend(window.dayjs_plugin_relativeTime);
+        dayjs.extend(window.dayjs_plugin_isBetween);
+        dayjs.extend(window.dayjs_plugin_isoWeek);
+        dayjs.extend(window.dayjs_plugin_weekday);
+        dayjs.extend(window.dayjs_plugin_localizedFormat);
+        dayjs.extend(window.dayjs_plugin_localeData);
+        dayjs.extend(window.dayjs_plugin_isToday);
+        dayjs.extend(window.dayjs_plugin_isTomorrow);
+        dayjs.extend(window.dayjs_plugin_isYesterday);
+        
+        marked.setOptions({});
+
+        // --- MAIN APP OBJECT ---
+        const App = {
+            // --- 1. DATA AND CONFIGURATION ---
+            state: {},
+            config: {
+                scheduleData: [
+                    { id: 'komunikasyon', subject: 'Komunikasyon at Pananaliksik sa Wika at Kulturang Pilipino', time: '01:00PM-02:00PM', days: 'MH'},
+                    { id: 'culture', subject: 'Understanding Culture, Society and Politics', time: '02:00PM-03:00PM', days: 'MH'},
+                    { id: 'disaster', subject: 'Disaster Readiness and Risk Reduction', time: '03:00PM-04:00PM', days: 'MH'},
+                    { id: 'philosophy', subject: 'Introduction to the Philosophy of the Human Person', time: '04:00PM-05:00PM', days: 'MH'},
+                    { id: 'oralcomm', subject: 'Oral Communication in Context', time: '01:00PM-02:00PM', days: 'TF'},
+                    { id: 'genmath', subject: 'General Mathematics', time: '02:00PM-03:00PM', days: 'TF'},
+                    { id: 'pdev', subject: 'Personal Development/ Pansariling Kaunlaran', time: '03:00PM-04:00PM', days: 'TF'},
+                    { id: 'earthlife', subject: 'Earth and Life Science', time: '04:00PM-05:00PM', days: 'TF'},
+                    { id: 'pe1', subject: 'Physical Education and Health 1', time: '11:00AM-12:00PM', days: 'W'}
+                ],
+                dayMap: { M: "Monday", T: "Tuesday", W: "Wednesday", H: "Thursday", F: "Friday", S: "Saturday", U: "Sunday" },
+                dayOrder: { U: 0, M: 1, T: 2, W: 3, H: 4, F: 5, S: 6 },
+                subjects: [],
+                colorPalette: ['#39FF14', '#00F5D4', '#FBBF24', '#F43F5E', '#A78BFA' ],
+                subjectColors: {},
+                gamification: {
+                    xpPerTask: 25,
+                    xpBonusOnTime: 15,
+                    xpPerFocusSession: 50,
+                    xpToLevelUp: (level) => Math.floor(100 * Math.pow(1.2, level - 1))
+                },
+                themes: {
+                    'emerald-matrix': { name: 'Emerald Matrix', backgroundUrl: 'https://images.unsplash.com/photo-1550745165-9bc0b252726a?q=80&w=2070&auto=format&fit=crop', colors: { '--bg-main': '#0A1913', '--bg-glass': 'rgba(10, 25, 19, 0.5)', '--bg-glass-nav': 'rgba(10, 25, 19, 0.6)', '--bg-modal': '#0E241C', '--border-glass': 'rgba(0, 245, 212, 0.2)', '--border-ui': '#1A3D32', '--text-primary': '#E6FBF5', '--text-secondary': '#88A099', '--accent-primary': '#39FF14', '--accent-secondary': '#00F5D4' }},
+                    'classic-light': { name: 'Classic Light', backgroundUrl: 'https://images.unsplash.com/photo-1518655048521-f130df041f66?q=80&w=2070&auto=format&fit=crop', colors: { '--bg-main': '#F8FAFC', '--bg-glass': 'rgba(255, 255, 255, 0.7)', '--bg-glass-nav': 'rgba(255, 255, 255, 0.8)', '--bg-modal': '#FFFFFF', '--border-glass': 'rgba(0, 0, 0, 0.08)', '--border-ui': '#E2E8F0', '--text-primary': '#0A1913', '--text-secondary': '#64748B', '--accent-primary': '#10B981', '--accent-secondary': '#0EA5E9' }},
+                    'solar-flare': { name: 'Solar Flare', backgroundUrl: 'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?q=80&w=2071&auto=format&fit=crop', colors: { '--bg-main': '#1A090D', '--bg-glass': 'rgba(26, 9, 13, 0.5)', '--bg-glass-nav': 'rgba(26, 9, 13, 0.6)', '--bg-modal': '#2C1016', '--border-glass': 'rgba(255, 87, 34, 0.2)', '--border-ui': '#4d1b25', '--text-primary': '#FFDBC9', '--text-secondary': '#a38c83', '--accent-primary': '#FF5722', '--accent-secondary': '#FFC107' }},
+                    'sapphire-wave': { name: 'Sapphire Wave', backgroundUrl: 'https://images.unsplash.com/photo-1553531384-411a247ccd73?q=80&w=2070&auto=format&fit=crop', colors: { '--bg-main': '#0B132B', '--bg-glass': 'rgba(11, 19, 43, 0.5)', '--bg-glass-nav': 'rgba(11, 19, 43, 0.6)', '--bg-modal': '#1C2541', '--border-glass': 'rgba(91, 206, 250, 0.2)', '--border-ui': '#3A506B', '--text-primary': '#F0F8FF', '--text-secondary': '#8D99AE', '--accent-primary': '#5BCEFA', '--accent-secondary': '#00A6FB' }},
+                    'cyberpunk-neon': { name: 'Cyberpunk Neon', backgroundUrl: 'https://images.unsplash.com/photo-1579591919798-c242d5a24203?q=80&w=2070&auto=format&fit=crop', colors: { '--bg-main': '#0c0a1f', '--bg-glass': 'rgba(12, 10, 31, 0.5)', '--bg-glass-nav': 'rgba(12, 10, 31, 0.6)', '--bg-modal': '#1a153c', '--border-glass': 'rgba(247, 0, 255, 0.2)', '--border-ui': '#3d2c7a', '--text-primary': '#e0d8ff', '--text-secondary': '#9e8aff', '--accent-primary': '#f700ff', '--accent-secondary': '#00f0ff' }},
+                    'sakura-dream': { name: 'Sakura Dream', backgroundUrl: 'https://images.unsplash.com/photo-1522383225653-ed111181a951?q=80&w=2076&auto=format&fit=crop', colors: { '--bg-main': '#FFF5F7', '--bg-glass': 'rgba(255, 245, 247, 0.7)', '--bg-glass-nav': 'rgba(255, 245, 247, 0.8)', '--bg-modal': '#FFFFFF', '--border-glass': 'rgba(255, 105, 180, 0.2)', '--border-ui': '#FFC2D9', '--text-primary': '#5C243C', '--text-secondary': '#A36D8A', '--accent-primary': '#FF69B4', '--accent-secondary': '#FFB6C1' }},
+                    'oceanic-deep': { name: 'Oceanic Deep', backgroundUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop', colors: { '--bg-main': '#001f3f', '--bg-glass': 'rgba(0, 31, 63, 0.5)', '--bg-glass-nav': 'rgba(0, 31, 63, 0.6)', '--bg-modal': '#002b55', '--border-glass': 'rgba(127, 255, 212, 0.2)', '--border-ui': '#00487c', '--text-primary': '#cceeff', '--text-secondary': '#7fddff', '--accent-primary': '#7FDBFF', '--accent-secondary': '#0074D9' }},
+                    'sunset-glow': { name: 'Sunset Glow', backgroundUrl: 'https://images.unsplash.com/photo-1475113548554-5a36f1f523d6?q=80&w=2070&auto=format&fit=crop', colors: { '--bg-main': '#2C1338', '--bg-glass': 'rgba(44, 19, 56, 0.5)', '--bg-glass-nav': 'rgba(44, 19, 56, 0.6)', '--bg-modal': '#3E1C4F', '--border-glass': 'rgba(255, 118, 118, 0.2)', '--border-ui': '#5A2A72', '--text-primary': '#FADADD', '--text-secondary': '#D3AACE', '--accent-primary': '#FF7676', '--accent-secondary': '#F6A6FF' }},
+                    'minty-fresh': { name: 'Minty Fresh', backgroundUrl: 'https://images.unsplash.com/photo-1627895239332-159868763a35?q=80&w=2070&auto=format&fit=crop', colors: { '--bg-main': '#F0FFF4', '--bg-glass': 'rgba(240, 255, 244, 0.7)', '--bg-glass-nav': 'rgba(240, 255, 244, 0.8)', '--bg-modal': '#FFFFFF', '--border-glass': 'rgba(67, 205, 128, 0.2)', '--border-ui': '#D4F0E0', '--text-primary': '#2F4F4F', '--text-secondary': '#6B8E23', '--accent-primary': '#43CD80', '--accent-secondary': '#98FB98' }},
+                    'dracula': { name: 'Dracula', backgroundUrl: 'https://images.unsplash.com/photo-1582731536932-26331959714a?q=80&w=1974&auto=format&fit=crop', colors: { '--bg-main': '#282a36', '--bg-glass': 'rgba(40, 42, 54, 0.5)', '--bg-glass-nav': 'rgba(40, 42, 54, 0.6)', '--bg-modal': '#343746', '--border-glass': 'rgba(255, 121, 198, 0.2)', '--border-ui': '#44475a', '--text-primary': '#f8f8f2', '--text-secondary': '#bd93f9', '--accent-primary': '#ff79c6', '--accent-secondary': '#8be9fd' }},
+                    'retro-wave': { name: 'Retro Wave', backgroundUrl: 'https://images.unsplash.com/photo-1520045890005-d85991e604c7?q=80&w=1974&auto=format&fit=crop', colors: { '--bg-main': '#261447', '--bg-glass': 'rgba(38, 20, 71, 0.5)', '--bg-glass-nav': 'rgba(38, 20, 71, 0.6)', '--bg-modal': '#351D6B', '--border-glass': 'rgba(255, 0, 110, 0.2)', '--border-ui': '#4E2A84', '--text-primary': '#FFFFFF', '--text-secondary': '#9D8DF1', '--accent-primary': '#FF006E', '--accent-secondary': '#3A86FF' }},
+                    'olive-grove': { name: 'Olive Grove', backgroundUrl: 'https://images.unsplash.com/photo-1542848331-0354c3639a1c?q=80&w=2070&auto=format&fit=crop', colors: { '--bg-main': '#F4F1DE', '--bg-glass': 'rgba(244, 241, 222, 0.7)', '--bg-glass-nav': 'rgba(244, 241, 222, 0.8)', '--bg-modal': '#FFFFFF', '--border-glass': 'rgba(61, 90, 39, 0.2)', '--border-ui': '#E0DCCA', '--text-primary': '#3D5A27', '--text-secondary': '#81B29A', '--accent-primary': '#619B8A', '--accent-secondary': '#A1C181' }},
+                    'arctic-blue': { name: 'Arctic Blue', backgroundUrl: 'https://images.unsplash.com/photo-1551415936-335339097576?q=80&w=1974&auto=format&fit=crop', colors: { '--bg-main': '#F0F8FF', '--bg-glass': 'rgba(240, 248, 255, 0.7)', '--bg-glass-nav': 'rgba(240, 248, 255, 0.8)', '--bg-modal': '#FFFFFF', '--border-glass': 'rgba(135, 206, 250, 0.3)', '--border-ui': '#D6EAF8', '--text-primary': '#283E51', '--text-secondary': '#85929E', '--accent-primary': '#87CEFA', '--accent-secondary': '#4682B4' }},
+                    'cosmic-lilac': { name: 'Cosmic Lilac', backgroundUrl: 'https://images.unsplash.com/photo-1538349992453-23907f511234?q=80&w=1974&auto=format&fit=crop', colors: { '--bg-main': '#2E294E', '--bg-glass': 'rgba(46, 41, 78, 0.5)', '--bg-glass-nav': 'rgba(46, 41, 78, 0.6)', '--bg-modal': '#3C366B', '--border-glass': 'rgba(147, 112, 219, 0.2)', '--border-ui': '#5D54A4', '--text-primary': '#E0D6FF', '--text-secondary': '#9B94D2', '--accent-primary': '#9370DB', '--accent-secondary': '#8A2BE2' }},
+                    'terra-cotta': { name: 'Terra Cotta', backgroundUrl: 'https://images.unsplash.com/photo-1554188248-986adbb63977?q=80&w=2070&auto=format&fit=crop', colors: { '--bg-main': '#E07A5F', '--bg-glass': 'rgba(224, 122, 95, 0.5)', '--bg-glass-nav': 'rgba(224, 122, 95, 0.6)', '--bg-modal': '#F28482', '--border-glass': 'rgba(255, 255, 255, 0.2)', '--border-ui': '#F6BD60', '--text-primary': '#FFFFFF', '--text-secondary': '#F7EDE2', '--accent-primary': '#F5CAC3', '--accent-secondary': '#84A59D' }},
+                    'jungle-canopy': { name: 'Jungle Canopy', backgroundUrl: 'https://images.unsplash.com/photo-1542281286-9e0e16bb7366?q=80&w=2070&auto=format&fit=crop', colors: { '--bg-main': '#004B23', '--bg-glass': 'rgba(0, 75, 35, 0.5)', '--bg-glass-nav': 'rgba(0, 75, 35, 0.6)', '--bg-modal': '#006400', '--border-glass': 'rgba(127, 255, 0, 0.2)', '--border-ui': '#38B000', '--text-primary': '#F0FFF0', '--text-secondary': '#9EF01A', '--accent-primary': '#70E000', '--accent-secondary': '#38B000' }},
+                    'city-lights': { name: 'City Lights', backgroundUrl: 'https://images.unsplash.com/photo-1519120126856-1b5c65415647?q=80&w=1974&auto=format&fit=crop', colors: { '--bg-main': '#1A1A1D', '--bg-glass': 'rgba(26, 26, 29, 0.5)', '--bg-glass-nav': 'rgba(26, 26, 29, 0.6)', '--bg-modal': '#2A2A2E', '--border-glass': 'rgba(255, 215, 0, 0.2)', '--border-ui': '#4E4E50', '--text-primary': '#FFFFFF', '--text-secondary': '#950740', '--accent-primary': '#FFD700', '--accent-secondary': '#C3073F' }},
+                    'minimalist-white': { name: 'Minimalist White', backgroundUrl: 'https://images.unsplash.com/photo-1511300636412-01434d183457?q=80&w=1974&auto=format&fit=crop', colors: { '--bg-main': '#FFFFFF', '--bg-glass': 'rgba(248, 249, 250, 0.7)', '--bg-glass-nav': 'rgba(248, 249, 250, 0.8)', '--bg-modal': '#F8F9FA', '--border-glass': 'rgba(0, 0, 0, 0.05)', '--border-ui': '#DEE2E6', '--text-primary': '#212529', '--text-secondary': '#6C757D', '--accent-primary': '#007BFF', '--accent-secondary': '#6C757D' }},
+                    'minimalist-black': { name: 'Minimalist Black', backgroundUrl: 'https://images.unsplash.com/photo-1533134486753-c833f0ed4866?q=80&w=2070&auto=format&fit=crop', colors: { '--bg-main': '#000000', '--bg-glass': 'rgba(20, 20, 20, 0.5)', '--bg-glass-nav': 'rgba(20, 20, 20, 0.6)', '--bg-modal': '#141414', '--border-glass': 'rgba(255, 255, 255, 0.1)', '--border-ui': '#343A40', '--text-primary': '#F8F9FA', '--text-secondary': '#ADB5BD', '--accent-primary': '#FFFFFF', '--accent-secondary': '#ADB5BD' }},
+                    'ocean-breeze': { name: 'Ocean Breeze', backgroundUrl: 'https://images.unsplash.com/photo-1507525428034-b723a996f329?q=80&w=2070&auto=format&fit=crop', colors: { '--bg-main': '#E0FBFC', '--bg-glass': 'rgba(224, 251, 252, 0.7)', '--bg-glass-nav': 'rgba(224, 251, 252, 0.8)', '--bg-modal': '#FFFFFF', '--border-glass': 'rgba(60, 170, 182, 0.2)', '--border-ui': '#C2DFE3', '--text-primary': '#3D5A80', '--text-secondary': '#98C1D9', '--accent-primary': '#293241', '--accent-secondary': '#EE6C4D' }},
+                    'vaporwave-sunset': { name: 'Vaporwave Sunset', backgroundUrl: 'https://images.unsplash.com/photo-1563291074-2bf8677ac0e5?q=80&w=1974&auto=format&fit=crop', colors: { '--bg-main': '#03001C', '--bg-glass': 'rgba(3, 0, 28, 0.5)', '--bg-glass-nav': 'rgba(3, 0, 28, 0.6)', '--bg-modal': '#150050', '--border-glass': 'rgba(255, 0, 234, 0.2)', '--border-ui': '#301934', '--text-primary': '#FFFFFF', '--text-secondary': '#FF00EA', '--accent-primary': '#00F0FF', '--accent-secondary': '#FF00EA' }},
+                },
+                clockStyles: [
+                    { id: 'digital-block', name: 'Digital Block' },
+                    { id: 'analog', name: 'Analog' },
+                    { id: 'text', name: 'Text Clock' },
+                    { id: 'binary', name: 'Binary' },
+                    { id: 'minimalist', name: 'Minimalist' },
+                    { id: 'flip', name: 'Flip Clock' },
+                    { id: 'dot-matrix', name: 'Dot Matrix' },
+                    { id: 'radial', name: 'Radial' }
+                ]
+            },
+            elements: {},
+            currentClassHubSubject: null,
+            tempTask: {},
+            tempDate: null,
+            focusTimer: {
+                interval: null,
+                secondsRemaining: 0,
+                taskId: null
+            },
+
+            // --- 2. LIFECYCLE & INITIALIZATION ---
+            init() {
+                console.log("Initializing AcademiaOS...");
+                this.cacheElements();
+                this.injectTemplates();
+                this.loadState();
+                
+                this.config.subjects = [...new Set(this.config.scheduleData.map(s => s.subject))];
+                this.util.assignSubjectColors();
+                
+                this.initEventListeners();
+                
+                this.ui.applyTheme(this.state.settings.theme);
+                this.ui.navigateTo(this.state.settings.activePage || 'home-page');
+                
+                this.render.all();
+                this.startClock();
+                
+                this.actions.checkBudgetPeriod();
+                this.actions.checkForCramAlert();
+                this.actions.promptForWeeklyDigest();
+            },
+
+            cacheElements() {
+                this.elements = {
+                    main: document.querySelector('main'),
+                    pages: {
+                        home: document.getElementById('home-page'),
+                        schedule: document.getElementById('schedule-page'),
+                        finances: document.getElementById('finances-page'),
+                        settings: document.getElementById('settings-page'),
+                    },
+                    modals: {
+                        classHub: document.getElementById('class-hub-modal'),
+                        form: document.getElementById('form-modal'),
+                        profileDetails: document.getElementById('profile-details-modal'),
+                        datePicker: document.getElementById('date-picker-modal'),
+                        focusTimer: document.getElementById('focus-timer-modal'),
+                        studySession: document.getElementById('study-session-modal'),
+                        emailDigest: document.getElementById('email-digest-modal'),
+                        confirm: document.getElementById('confirm-modal'),
+                        loader: document.getElementById('loader-overlay')
+                    },
+                    toastContainer: document.getElementById('toast-container')
+                };
+            },
+
+            injectTemplates() {
+                // Modal templates are injected here
+                this.elements.modals.classHub.innerHTML = `<div class="modal-content"><div class="modal-header"><h2 id="class-hub-title" class="modal-title"></h2><button class="btn btn-secondary" id="class-hub-close-btn"><i class="ph-bold ph-x"></i></button></div><div class="modal-tabs"><button class="tab-btn active" data-tab="assignments">Assignments</button><button class="tab-btn" data-tab="resources">Resources</button><button class="tab-btn" data-tab="notes">Notes</button><button class="tab-btn" data-tab="tutor">AI Tutor</button></div><div class="modal-body"><div id="assignments-tab" class="tab-content active"><div class="page-header" style="margin:0 0 1rem 0;"><h3 style="font-size:1.2rem;font-weight:700;">Tasks</h3><button id="hub-add-task-btn" class="btn"><i class="ph-bold ph-plus"></i></button></div><div id="assignments-list" class="task-list"></div></div><div id="resources-tab" class="tab-content"><div class="page-header" style="margin:0 0 1rem 0;"><h3 style="font-size:1.2rem;font-weight:700;">Links & Files</h3><button id="hub-add-resource-btn" class="btn"><i class="ph-bold ph-plus"></i></button></div><div id="resource-list" class="resource-list"></div></div><div id="notes-tab" class="tab-content"><div class="note-editor"><textarea id="note-textarea" class="form-control" style="min-height:200px;" placeholder="Start typing your notes..."></textarea></div><div class="form-actions"><button id="summarize-notes-btn" class="btn btn-ai"><span class="spinner"></span><span class="btn-text">✨ Summarize</span></button><button id="save-note-btn" class="btn">Save Note</button></div></div><div id="tutor-tab" class="tab-content"><textarea id="tutor-question-input" class="form-control" placeholder="Ask a question about this subject..."></textarea><div class="form-actions"><button id="ask-tutor-btn" class="btn btn-ai"><span class="spinner"></span><span class="btn-text">✨ Ask Tutor</span></button></div><div id="tutor-response-area" style="display:none;"></div></div></div></div>`;
+                this.elements.modals.form.innerHTML = `<div class="modal-content"><div class="modal-header"><h2 id="form-modal-title" class="modal-title"></h2><button class="btn btn-secondary form-modal-close"><i class="ph-bold ph-x"></i></button></div><form id="form-modal-form" class="modal-body"></form></div>`;
+                this.elements.modals.profileDetails.innerHTML = `<div class="modal-content"><div class="modal-header"><h2 class="modal-title">Student Details</h2><button class="btn btn-secondary" id="profile-details-close-btn"><i class="ph-bold ph-x"></i></button></div><div class="modal-body" id="profile-details-modal-body"></div></div>`;
+                this.elements.modals.datePicker.innerHTML = `<div class="modal-content"><div class="modal-header"><h2 class="modal-title">Set Due Date</h2><button class="btn btn-secondary date-picker-close"><i class="ph-bold ph-x"></i></button></div><div class="modal-body"><div class="calendar-header"><button id="prev-month-btn" class="btn btn-secondary"><i class="ph-bold ph-caret-left"></i></button><span id="calendar-month-year" class="calendar-month-year"></span><button id="next-month-btn" class="btn btn-secondary"><i class="ph-bold ph-caret-right"></i></button></div><div id="calendar-grid-header" class="calendar-grid"></div><div id="calendar-grid-body" class="calendar-grid"></div></div><div class="form-actions" style="justify-content: space-between;"><button type="button" id="set-next-meeting-btn" class="btn btn-secondary">Next Meeting</button><div><button type="button" class="btn btn-secondary date-picker-close">Cancel</button><button type="button" id="set-date-btn" class="btn">Set Date</button></div></div></div>`;
+                this.elements.modals.focusTimer.innerHTML = `<div class="modal-content" style="text-align:center;"><div class="modal-body"><h3 id="focus-timer-task-title">Focusing on...</h3><div id="focus-timer-display">25:00</div><div class="form-actions" style="justify-content:center;"><button id="focus-timer-start-pause" class="btn">Start</button><button id="focus-timer-cancel" class="btn btn-secondary">Cancel</button></div></div></div>`;
+                this.elements.modals.studySession.innerHTML = `<div class="modal-content"><div class="modal-header"><h2 class="modal-title">✨ AI Study Plan</h2><button class="btn btn-secondary" id="study-session-close-btn"><i class="ph-bold ph-x"></i></button></div><div id="study-session-body" class="modal-body"></div></div>`;
+                this.elements.modals.emailDigest.innerHTML = `<div class="modal-content"><div class="modal-header"><h2 class="modal-title">Weekly Digest</h2><button class="btn btn-secondary" id="email-digest-close-btn"><i class="ph-bold ph-x"></i></button></div><div class="modal-body"><p>It's Monday morning! Time to plan your week. Would you like to generate your weekly schedule and task summary?</p><div id="email-digest-content" style="display:none; margin-top:1rem; padding:1rem; background:rgba(0,0,0,0.1); border-radius: var(--border-radius-sm);"></div></div><div class="form-actions"><button id="email-digest-generate-btn" class="btn">Generate & Open Email</button></div></div>`;
+                this.elements.modals.confirm.innerHTML = `<div class="modal-content"><div class="modal-header"><h2 id="confirm-title" class="modal-title">Are you sure?</h2></div><div class="modal-body"><p id="confirm-message">This action cannot be undone.</p></div><div class="form-actions"><button id="confirm-cancel-btn" class="btn btn-secondary">Cancel</button><button id="confirm-ok-btn" class="btn btn-danger">Confirm</button></div></div>`;
+            },
+
+            loadState() {
+                try {
+                    const defaultState = this.util.getDefaultState();
+                    const savedStateJSON = localStorage.getItem('academiaOSState_v4');
+                    let loadedState = savedStateJSON ? JSON.parse(savedStateJSON) : {};
+                    
+                    this.state = {
+                        ...defaultState,
+                        ...loadedState,
+                        player: { ...defaultState.player, ...(loadedState.player || {}) },
+                        profile: { ...defaultState.profile, ...(loadedState.profile || {}) },
+                        settings: { ...defaultState.settings, ...(loadedState.settings || {}) },
+                        finances: { ...defaultState.finances, ...(loadedState.finances || {}) },
+                        history: { ...defaultState.history, ...(loadedState.history || {}) },
+                        tasks: loadedState.tasks || [],
+                        notes: loadedState.notes || {},
+                        resources: loadedState.resources || []
+                    };
+
+                } catch(e) { 
+                    console.error("Failed to load state, using defaults.", e);
+                    this.state = this.util.getDefaultState(); 
+                }
+                this.saveState();
+            },
+
+            saveState() {
+                localStorage.setItem('academiaOSState_v4', JSON.stringify(this.state));
+            },
+
+            initEventListeners() {
+                document.querySelectorAll('.nav-btn').forEach(btn => {
+                    if (btn.hasAttribute('data-page')) {
+                        btn.addEventListener('click', () => this.ui.navigateTo(btn.dataset.page));
+                    }
+                });
+                
+                document.body.addEventListener('click', e => {
+                    const target = e.target;
+                    
+                    if (target.closest("#show-profile-details-btn")) { this.ui.showProfileDetailsModal(); return; }
+                    if (target.closest("#profile-details-close-btn")) { this.ui.hideProfileDetailsModal(); return; }
+                    if (target.closest('.schedule-class-item')) { this.ui.showClassHub(target.closest('.schedule-class-item').dataset.subject); return; }
+                    if (target.closest('#class-hub-close-btn')) { this.ui.hideClassHub(); return; }
+                    if (target.closest('.form-modal-close')) { this.ui.hideFormModal(); return; }
+                    if (target.closest('.date-picker-close')) { this.ui.hideDatePickerModal(); return; }
+                    if (target.closest('#study-session-close-btn')) { this.ui.hideStudySessionModal(); return; }
+                    if (target.closest('#email-digest-close-btn')) { this.ui.hideEmailDigestModal(); return; }
+                    
+                    const tabBtn = target.closest('.tab-btn');
+                    if (tabBtn) { this.ui.switchHubTab(tabBtn.dataset.tab); return; }
+
+                    if (target.closest('#hub-add-task-btn')) { this.ui.showTaskForm(); return; }
+                    if (target.closest('#hub-add-resource-btn')) { this.ui.showResourceForm(); return; }
+                    if (target.closest('#add-expense-btn')) { this.ui.showExpenseForm(); return; }
+                    if (target.closest('#save-note-btn')) { this.actions.saveNote(); return; }
+                    if (target.closest('#summarize-notes-btn')) { this.actions.summarizeNotes(target.closest('#summarize-notes-btn')); return; }
+                    if (target.closest('#ask-tutor-btn')) { this.actions.askAiTutor(target.closest('#ask-tutor-btn')); return; }
+                    
+                    const taskItem = target.closest('.task-item');
+                    if(taskItem) {
+                        if(target.closest('.task-checkbox')) this.actions.toggleTask(taskItem.dataset.id);
+                        else if (!target.closest('.btn-focus-timer')) this.ui.showTaskForm(taskItem.dataset.id);
+                        else if (target.closest('.btn-focus-timer')) this.actions.startFocusTimer(taskItem.dataset.id);
+                        return;
+                    }
+                    
+                    const deleteResourceBtn = target.closest('.delete-resource-btn');
+                    if (deleteResourceBtn) {
+                        const resourceItem = deleteResourceBtn.closest('.resource-item');
+                        const resourceId = resourceItem.dataset.id;
+                        this.ui.showConfirmModal(
+                            'Delete Resource?',
+                            'Are you sure you want to delete this resource?',
+                            () => this.actions.deleteResource(resourceId)
+                        );
+                        return;
+                    }
+                    
+                    if (target.closest('#focus-timer-start-pause')) this.actions.toggleFocusTimer();
+                    if (target.closest('#focus-timer-cancel')) this.actions.cancelFocusTimer();
+                    if (target.closest('#email-digest-generate-btn')) this.actions.generateAndSendDigest();
+                    if (target.closest('#plan-study-session-btn')) { this.actions.planStudySession(target.closest('#plan-study-session-btn')); return; }
+
+                    if (target.closest('#prev-month-btn')) this.actions.changeMonth(-1);
+                    if (target.closest('#next-month-btn')) this.actions.changeMonth(1);
+                    const calDay = target.closest('.calendar-day:not(.other-month)');
+                    if (calDay) this.actions.selectDate(calDay.dataset.date);
+                    if (target.closest('#set-date-btn')) this.actions.confirmDateSelection();
+                    if (target.closest('#set-next-meeting-btn')) this.actions.setToNextMeeting();
+
+                    const themeOption = target.closest('.theme-option');
+                    if (themeOption) {
+                        this.actions.setTheme(themeOption.dataset.themeId);
+                        return;
+                    }
+                    if (target.closest('#save-settings-btn')) {
+                        this.actions.saveSettings();
+                        return;
+                    }
+                    if (target.closest('#export-data-btn')) {
+                        this.actions.exportData();
+                        return;
+                    }
+                    if (target.closest('#import-data-btn')) {
+                        document.getElementById('import-file-input')?.click();
+                        return;
+                    }
+                    if (target.closest('#reset-app-btn')) {
+                        this.actions.resetApp();
+                        return;
+                    }
+                    if (target.closest('.delete-category-btn')) {
+                        this.actions.deleteFinanceCategory(target.closest('.delete-category-btn').dataset.category);
+                        return;
+                    }
+                    if (target.closest('#add-category-btn')) {
+                        this.actions.addFinanceCategory();
+                        return;
+                    }
+                    if (target.closest('.delete-link-btn')) {
+                        this.actions.deleteLink(target.closest('.delete-link-btn').dataset.url);
+                        return;
+                    }
+                    if (target.closest('#add-link-btn')) {
+                        this.actions.addLink();
+                        return;
+                    }
+                    
+                    // Custom dropdown logic
+                    const dropdownTrigger = target.closest('.dropdown-trigger');
+                    if (dropdownTrigger) {
+                        const panel = dropdownTrigger.nextElementSibling;
+                        panel.classList.toggle('visible');
+                    } else if (!target.closest('.dropdown-panel')) {
+                        document.querySelectorAll('.dropdown-panel.visible').forEach(panel => {
+                            panel.classList.remove('visible');
+                        });
+                    }
+                    
+                    const dropdownOption = target.closest('.dropdown-option');
+                    if (dropdownOption) {
+                        const panel = dropdownOption.closest('.dropdown-panel');
+                        const trigger = panel.previousElementSibling;
+                        trigger.querySelector('span').textContent = dropdownOption.textContent;
+                        trigger.dataset.value = dropdownOption.dataset.value;
+                        panel.classList.remove('visible');
+                    }
+                    
+                    const budgetTypeBtn = target.closest('.budget-type-btn');
+                    if(budgetTypeBtn) {
+                        document.querySelectorAll('.budget-type-btn').forEach(btn => btn.classList.remove('active'));
+                        budgetTypeBtn.classList.add('active');
+                    }
+
+                });
+
+                this.elements.modals.form.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    this.handlers.handleFormSubmit.call(this, e);
+                });
+                
+                const importInput = document.createElement('input');
+                importInput.type = 'file';
+                importInput.id = 'import-file-input';
+                importInput.accept = '.json';
+                importInput.style.display = 'none';
+                document.body.appendChild(importInput);
+                importInput.addEventListener('change', (e) => this.actions.importData(e));
+            },
+
+            startClock() {
+                setInterval(() => {
+                    const now = dayjs();
+                    const timeContainer = document.getElementById('time-now');
+                    const miniClock = document.getElementById('mini-clock');
+                    if (timeContainer) {
+                        this.render.clock(now);
+                    }
+                    if (miniClock) {
+                        miniClock.textContent = now.format('HH:mm');
+                    }
+                    const dateEl = document.getElementById('date-now');
+                    if(dateEl) dateEl.textContent = now.format('dddd, MMMM D');
+                }, 1000);
+
+                setInterval(() => {
+                    if (document.getElementById('home-page').classList.contains('active')) {
+                        this.render.liveStatus();
+                    }
+                }, 5000);
+            },
+
+            // --- 3. HELPER OBJECTS ---
+            handlers: {
+                handleFormSubmit(event) {
+                    const formData = new FormData(event.target);
+                    const type = formData.get('formType');
+                    switch(type) {
+                        case 'task':
+                            this.tempTask.title = formData.get('title');
+                            this.ui.hideFormModal();
+                            this.ui.showDatePickerModal();
+                            break;
+                        case 'resource':
+                            this.actions.saveResource({
+                                id: `res_${Date.now()}`,
+                                subject: this.currentClassHubSubject,
+                                title: formData.get('title'),
+                                url: formData.get('url'),
+                                type: document.querySelector('#resource-type-dropdown').dataset.value
+                            });
+                            this.ui.hideFormModal();
+                            break;
+                        case 'expense':
+                            this.actions.saveExpense({
+                                id: `exp_${Date.now()}`,
+                                description: formData.get('description'),
+                                category: document.querySelector('#expense-category-dropdown').dataset.value,
+                                amount: parseFloat(formData.get('amount')) || 0,
+                                date: dayjs().toISOString(),
+                            });
+                            this.ui.hideFormModal();
+                            break;
+                    }
+                }
+            },
+            
+            ToastManager: {
+                show(message, type = 'info') {
+                    const toast = document.createElement('div');
+                    toast.className = 'toast';
+                    const iconClass = type === 'success' ? 'ph-check-circle' : (type === 'error' ? 'ph-x-circle' : 'ph-info');
+                    const iconColor = type === 'success' ? 'var(--accent-primary)' : (type === 'error' ? 'var(--accent-red)' : 'var(--accent-secondary)');
+                    toast.innerHTML = `<i class="ph-bold ${iconClass}" style="color:${iconColor}; font-size: 1.5rem;"></i> <p>${App.util.sanitizeHTML(message)}</p>`;
+                    
+                    App.elements.toastContainer.appendChild(toast);
+                    void toast.offsetWidth; 
+                    setTimeout(() => toast.classList.add('show'), 10);
+                    
+                    setTimeout(() => {
+                        toast.classList.remove('show');
+                        toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+                    }, 4000);
+                }
+            },
+            
+            actions: {
+                saveTask() {
+                    const finalTask = { 
+                        ...App.tempTask, 
+                        dueDate: App.tempDate.toISOString(),
+                        xpAwarded: App.tempTask.xpAwarded || false 
+                    };
+                    const index = App.state.tasks.findIndex(t => t.id === finalTask.id);
+                    if (index > -1) {
+                        App.state.tasks[index] = { ...App.state.tasks[index], ...finalTask };
+                        App.ToastManager.show('Task updated!', 'success');
+                    } else {
+                        App.state.tasks.push(finalTask);
+                        App.ToastManager.show('Task saved!', 'success');
+                    }
+                    App.saveState();
+                    App.render.classHub();
+                    App.render.homePage();
+                },
+                saveExpense(expenseData) {
+                    App.state.finances.expenses.push(expenseData);
+                    App.saveState();
+                    App.render.financesPage();
+                    App.ToastManager.show("Expense Added", "success");
+                },
+                saveResource(resourceData) {
+                    App.state.resources.push(resourceData);
+                    App.saveState();
+                    App.render.classHub();
+                    App.ToastManager.show("Resource saved!", 'success');
+                },
+                deleteResource(resourceId) {
+                    App.state.resources = App.state.resources.filter(r => r.id !== resourceId);
+                    App.saveState();
+                    App.render.resources();
+                    App.ToastManager.show('Resource deleted.', 'info');
+                },
+                toggleTask(taskId) {
+                    const task = App.state.tasks.find(t => t.id === taskId);
+                    if (!task) return;
+                    
+                    const wasCompleted = task.completed;
+                    task.completed = !task.completed;
+
+                    if (task.completed && !wasCompleted) {
+                        task.completedAt = dayjs().toISOString();
+                        
+                        if (App.state.settings.gamificationEnabled && !task.xpAwarded) {
+                            const onTime = dayjs(task.completedAt).isBefore(dayjs(task.dueDate));
+                            const { xpPerTask, xpBonusOnTime } = App.config.gamification;
+                            let xpGained = xpPerTask;
+                            if(onTime) xpGained += xpBonusOnTime;
+                            
+                            App.state.player.xp += xpGained;
+                            task.xpAwarded = true; // Mark XP as awarded
+                            App.ToastManager.show(`+${xpGained} XP!`, 'success');
+                            
+                            let needed = App.config.gamification.xpToLevelUp(App.state.player.level);
+                            while(App.state.player.xp >= needed) {
+                                App.state.player.level++;
+                                App.state.player.xp -= needed;
+                                App.ToastManager.show(`Level Up! You are now Level ${App.state.player.level}!`, 'success');
+                                needed = App.config.gamification.xpToLevelUp(App.state.player.level);
+                            }
+                        }
+                        
+                        // Add to history
+                        const historyTask = { ...task };
+                        App.state.history.completedTasks.unshift(historyTask);
+                        if (App.state.history.completedTasks.length > 50) { // Limit history size
+                            App.state.history.completedTasks.pop();
+                        }
+
+                    } else if (!task.completed) {
+                        App.ToastManager.show('Task marked incomplete.', 'info');
+                    }
+
+                    App.saveState();
+                    App.render.classHub();
+                    App.render.homePage();
+                    if (App.state.settings.gamificationEnabled) App.render.profileWidget();
+                },
+                saveNote() {
+                    const noteTextarea = document.getElementById('note-textarea');
+                    if (App.currentClassHubSubject) {
+                        App.state.notes[App.currentClassHubSubject] = noteTextarea.value;
+                        App.saveState();
+                        App.ToastManager.show('Note saved!', 'success');
+                    } else {
+                        App.ToastManager.show('No subject selected for notes.', 'error');
+                    }
+                },
+                async summarizeNotes(buttonElement) {
+                    const notes = document.getElementById('note-textarea').value;
+                    if (!notes.trim()) {
+                        App.ToastManager.show("No notes to summarize.", "info");
+                        return;
+                    }
+
+                    buttonElement.classList.add('loading');
+                    App.ui.showLoader();
+                    try {
+                        const prompt = `Summarize the following academic notes concisely:\n\n${notes}`;
+                        const summary = await App.actions.callGemini(prompt);
+                        if (summary) {
+                            document.getElementById('note-textarea').value = summary;
+                            App.ToastManager.show("Notes summarized!", "success");
+                            App.actions.saveNote();
+                        }
+                    } finally {
+                        buttonElement.classList.remove('loading');
+                        App.ui.hideLoader();
+                    }
+                },
+                async askAiTutor(buttonElement) {
+                    const questionInput = document.getElementById('tutor-question-input');
+                    const responseArea = document.getElementById('tutor-response-area');
+                    const question = questionInput.value.trim();
+
+                    if (!question) {
+                        App.ToastManager.show("Please enter a question for the AI tutor.", "info");
+                        return;
+                    }
+
+                    buttonElement.classList.add('loading');
+                    responseArea.style.display = 'none';
+                    responseArea.innerHTML = '';
+                    App.ui.showLoader();
+
+                    try {
+                        const subject = App.currentClassHubSubject ? ` (related to ${App.currentClassHubSubject})` : '';
+                        const prompt = `As an AI academic tutor, answer the following question${subject}: "${question}". Provide a concise and helpful response.`;
+                        const response = await App.actions.callGemini(prompt);
+
+                        if (response) {
+                            responseArea.innerHTML = DOMPurify.sanitize(marked.parse(response));
+                            responseArea.style.display = 'block';
+                            App.ToastManager.show("AI tutor responded!", "success");
+                        }
+                    } finally {
+                        buttonElement.classList.remove('loading');
+                        App.ui.hideLoader();
+                    }
+                },
+                changeMonth(dir) { 
+                    App.tempDate = App.tempDate.add(dir, 'month'); 
+                    App.render.datePicker(); 
+                },
+                selectDate(dateStr) {
+                    const day = dayjs(dateStr);
+                    App.tempDate = App.tempDate.year(day.year()).month(day.month()).date(day.date());
+                    App.render.datePicker();
+                },
+                confirmDateSelection() {
+                    const hour = 17; // Default to 5 PM
+                    const min = 0;
+                    App.tempDate = App.tempDate.hour(hour).minute(min).second(0);
+                    App.ui.hideDatePickerModal();
+                    App.actions.saveTask();
+                },
+                setToNextMeeting() {
+                    const subject = App.tempTask.subject;
+                    if (!subject) {
+                        App.ToastManager.show("No subject selected for this task.", "error");
+                        return;
+                    }
+
+                    const scheduleInfo = App.config.scheduleData.find(s => s.subject === subject);
+                    if (!scheduleInfo) {
+                        App.ToastManager.show("No schedule found for this subject.", "error");
+                        return;
+                    }
+
+                    const dayChars = scheduleInfo.days.split('');
+                    const dayNumbers = dayChars.map(d => App.config.dayOrder[d]);
+                    
+                    let nextMeeting = dayjs();
+                    for (let i = 0; i < 14; i++) { // Check next 2 weeks
+                        nextMeeting = nextMeeting.add(1, 'day');
+                        if (dayNumbers.includes(nextMeeting.day())) {
+                            App.tempDate = nextMeeting;
+                            App.render.datePicker();
+                            App.ToastManager.show(`Date set to next meeting: ${nextMeeting.format('ddd, MMM D')}`, 'success');
+                            return;
+                        }
+                    }
+                },
+                startFocusTimer(taskId) {
+                    if (!App.state.settings.gamificationEnabled) {
+                        App.ToastManager.show("Gamification is disabled in settings.", "info");
+                        return;
+                    }
+                    const task = App.state.tasks.find(t => t.id === taskId);
+                    if (!task) return;
+                    App.focusTimer.taskId = taskId;
+                    App.focusTimer.secondsRemaining = 25 * 60; // 25 minutes
+                    App.ui.showFocusTimerModal();
+                    App.render.focusTimer();
+                    App.actions.toggleFocusTimer();
+                },
+                toggleFocusTimer() {
+                    const button = document.getElementById('focus-timer-start-pause');
+                    if (App.focusTimer.interval) {
+                        clearInterval(App.focusTimer.interval);
+                        App.focusTimer.interval = null;
+                        button.textContent = 'Resume';
+                    } else {
+                        button.textContent = 'Pause';
+                        App.focusTimer.interval = setInterval(() => {
+                            App.focusTimer.secondsRemaining--;
+                            App.render.focusTimer();
+                            if (App.focusTimer.secondsRemaining <= 0) {
+                                App.actions.completeFocusSession();
+                            }
+                        }, 1000);
+                    }
+                },
+                cancelFocusTimer() {
+                    clearInterval(App.focusTimer.interval);
+                    App.focusTimer.interval = null;
+                    App.focusTimer.secondsRemaining = 0;
+                    App.ui.hideFocusTimerModal();
+                    App.ToastManager.show("Focus session cancelled.", "info");
+                },
+                completeFocusSession() {
+                    clearInterval(App.focusTimer.interval);
+                    App.focusTimer.interval = null;
+                    const xpGained = App.config.gamification.xpPerFocusSession;
+                    App.state.player.xp += xpGained;
+                    App.ToastManager.show(`Focus session complete! +${xpGained} XP!`, 'success');
+                    App.ui.hideFocusTimerModal();
+                    App.render.profileWidget();
+                    App.saveState();
+                },
+                setTheme(themeId) {
+                    App.state.settings.theme = themeId;
+                    App.ui.applyTheme(themeId);
+                    App.saveState();
+                    App.render.settingsPage();
+                    App.ToastManager.show(`Theme set to ${App.config.themes[themeId].name}`, 'success');
+                },
+                saveSettings() {
+                    App.state.profile.name = document.getElementById('profile-name-input').value;
+                    App.state.profile.grade = document.getElementById('profile-grade-input').value;
+                    App.state.settings.budgetAmount = parseFloat(document.getElementById('budget-amount-input').value) || 0;
+                    App.state.settings.budgetType = document.querySelector('.budget-type-btn.active').dataset.type;
+                    App.state.settings.apiKey = document.getElementById('api-key-input').value;
+                    App.state.settings.gamificationEnabled = document.getElementById('gamification-toggle').checked;
+                    App.state.settings.clockStyle = document.querySelector('#clock-style-dropdown').dataset.value;
+                    
+                    App.saveState();
+                    App.ToastManager.show('Settings saved!', 'success');
+                    App.render.all(); // Re-render all pages to reflect changes
+                },
+                addFinanceCategory() {
+                    const input = document.getElementById('new-category-input');
+                    const newCategory = input.value.trim();
+                    if (newCategory && !App.state.settings.budgetCategories.includes(newCategory)) {
+                        App.state.settings.budgetCategories.push(newCategory);
+                        App.saveState();
+                        App.render.settingsPage();
+                        App.ToastManager.show(`Category "${newCategory}" added.`, 'success');
+                    } else if (!newCategory) {
+                        App.ToastManager.show('Category name cannot be empty.', 'error');
+                    } else {
+                        App.ToastManager.show('Category already exists.', 'error');
+                    }
+                    input.value = '';
+                },
+                deleteFinanceCategory(category) {
+                    App.state.settings.budgetCategories = App.state.settings.budgetCategories.filter(c => c !== category);
+                    App.saveState();
+                    App.render.settingsPage();
+                    App.render.financesPage();
+                    App.ToastManager.show(`Category "${category}" removed.`, 'info');
+                },
+                addLink() {
+                    const titleInput = document.getElementById('new-link-title-input');
+                    const urlInput = document.getElementById('new-link-url-input');
+                    const title = titleInput.value.trim();
+                    const url = urlInput.value.trim();
+                    if (title && url) {
+                        App.state.settings.customLinks.push({ title, url });
+                        App.saveState();
+                        App.render.settingsPage();
+                        App.ToastManager.show('Link added!', 'success');
+                        titleInput.value = '';
+                        urlInput.value = '';
+                    } else {
+                        App.ToastManager.show('Both title and URL are required.', 'error');
+                    }
+                },
+                deleteLink(url) {
+                    App.state.settings.customLinks = App.state.settings.customLinks.filter(link => link.url !== url);
+                    App.saveState();
+                    App.render.settingsPage();
+                    App.ToastManager.show('Link removed.', 'info');
+                },
+                checkBudgetPeriod() {
+                    const now = dayjs();
+                    const budgetStart = dayjs(App.state.finances.budgetStartDate);
+                    const type = App.state.settings.budgetType;
+
+                    let shouldReset = false;
+                    if (!budgetStart.isValid()) {
+                        shouldReset = true;
+                    } else if (type === 'daily' && !now.isSame(budgetStart, 'day')) {
+                        shouldReset = true;
+                    } else if (type === 'weekly' && !now.isSame(budgetStart, 'isoWeek')) {
+                        shouldReset = true;
+                    }
+
+                    if (shouldReset) {
+                        const oldExpenses = [...App.state.finances.expenses];
+                        if (oldExpenses.length > 0) {
+                            const totalSpent = oldExpenses.reduce((sum, e) => sum + e.amount, 0);
+                            App.state.history.budgetPeriods.unshift({
+                                startDate: budgetStart.toISOString(),
+                                endDate: dayjs().subtract(1, 'day').endOf('day').toISOString(),
+                                totalSpent: totalSpent,
+                                budget: App.state.settings.budgetAmount,
+                                type: type
+                            });
+                            if (App.state.history.budgetPeriods.length > 20) {
+                                App.state.history.budgetPeriods.pop();
+                            }
+                        }
+
+                        App.state.finances.budgetStartDate = now.startOf(type === 'daily' ? 'day' : 'isoWeek').toISOString();
+                        App.state.finances.expenses = [];
+                        App.saveState();
+                        App.ToastManager.show(`New ${type} budget period! Your spending has been reset.`, 'info');
+                        if (App.state.settings.activePage === 'finances-page') {
+                            App.render.financesPage();
+                        }
+                    }
+                },
+                checkForCramAlert(){
+                    const now = dayjs();
+                    const lastAlert = dayjs(App.state.settings.lastCramAlertDate);
+                    if (lastAlert.isValid() && now.isSame(lastAlert, 'day')) {
+                        return; // Already alerted today
+                    }
+
+                    const upcomingTasks = App.state.tasks.filter(t => 
+                        !t.completed && dayjs(t.dueDate).isAfter(now) && dayjs(t.dueDate).isBefore(now.add(24, 'hour'))
+                    );
+
+                    if (upcomingTasks.length > 0) {
+                        App.ToastManager.show(`Heads up! You have ${upcomingTasks.length} task(s) due in the next 24 hours.`, 'info');
+                        App.state.settings.lastCramAlertDate = now.toISOString();
+                        App.saveState();
+                    }
+                },
+                promptForWeeklyDigest(){
+                    const now = dayjs();
+                    // Monday is weekday 1 for dayjs
+                    if (now.day() !== 1) return;
+
+                    const lastDigest = dayjs(App.state.settings.lastDigestDate);
+                    if (lastDigest.isValid() && now.isSame(lastDigest, 'isoWeek')) {
+                        return; // Already prompted this week
+                    }
+                    
+                    App.ui.showEmailDigestModal();
+                    App.state.settings.lastDigestDate = now.toISOString();
+                    App.saveState();
+                },
+                generateAndSendDigest(){
+                    const now = dayjs();
+                    const endOfWeek = now.endOf('isoWeek');
+                    const upcomingTasks = App.state.tasks.filter(t => !t.completed && dayjs(t.dueDate).isBefore(endOfWeek));
+
+                    let body = "Here's your weekly summary for AcademiaOS:\n\n";
+                    body += "--- UPCOMING TASKS THIS WEEK ---\n";
+                    if (upcomingTasks.length > 0) {
+                        upcomingTasks.forEach(task => {
+                            body += `- ${task.title} (Due: ${dayjs(task.dueDate).format('ddd, MMM D')})\n`;
+                        });
+                    } else {
+                        body += "No tasks due this week. Great job!\n";
+                    }
+                    
+                    body += "\n--- YOUR SCHEDULE ---\n";
+                    Object.entries(App.config.dayMap).forEach(([key, dayName]) => {
+                        const classes = App.config.scheduleData.filter(c => c.days.includes(key));
+                        if(classes.length > 0) {
+                            body += `${dayName}:\n`;
+                            classes.forEach(c => {
+                                body += `  - ${c.time}: ${c.subject}\n`;
+                            });
+                        }
+                    });
+
+                    const subject = `Your Weekly AcademiaOS Digest - ${now.format('MMM D')}`;
+                    const mailtoLink = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+                    window.location.href = mailtoLink;
+                    App.ui.hideEmailDigestModal();
+                },
+                async callGemini(prompt) {
+                    const apiKey = App.state.settings.apiKey;
+                    if (!apiKey) {
+                        App.ToastManager.show("Gemini API key not set. Please add it in Settings.", "error");
+                        return null;
+                    }
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`;
+                    const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                    try {
+                        const response = await fetch(apiUrl, { 
+                            method: 'POST', 
+                            headers: { 'Content-Type': 'application/json' }, 
+                            body: JSON.stringify(payload) 
+                        });
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            console.error(`API Error: ${response.status}`, errorData);
+                            App.ToastManager.show(`API Error: ${errorData.error?.message || 'Unknown error'}`, "error");
+                            return null;
+                        }
+                        const result = await response.json();
+                        if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts && result.candidates[0].content.parts.length > 0) {
+                            return result.candidates[0].content.parts[0].text;
+                        }
+                        return null;
+                    } catch (error) {
+                        console.error("Gemini API call failed:", error);
+                        App.ToastManager.show("AI feature failed. Check console for details.", "error");
+                        return null;
+                    }
+                },
+                exportData() {
+                    try {
+                        const dataStr = JSON.stringify(App.state);
+                        const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                        const exportFileDefaultName = `AcademiaOS_Backup_${dayjs().format('YYYY-MM-DD')}.json`;
+                        
+                        const linkElement = document.createElement('a');
+                        linkElement.setAttribute('href', dataUri);
+                        linkElement.setAttribute('download', exportFileDefaultName);
+                        linkElement.click();
+                        App.ToastManager.show('Data exported successfully!', 'success');
+                    } catch (error) {
+                        console.error("Export failed:", error);
+                        App.ToastManager.show('Failed to export data.', 'error');
+                    }
+                },
+                importData(event) {
+                    const file = event.target.files[0];
+                    if (!file) return;
+
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const importedState = JSON.parse(e.target.result);
+                            if (importedState.settings && importedState.tasks) {
+                                App.ui.showConfirmModal(
+                                    'Import Data?',
+                                    'This will overwrite all current data. Are you sure you want to continue?',
+                                    () => {
+                                        App.state = importedState;
+                                        App.saveState();
+                                        App.ToastManager.show('Data imported! Reloading...', 'success');
+                                        setTimeout(() => window.location.reload(), 1500);
+                                    }
+                                );
+                            } else {
+                                throw new Error("Invalid backup file format.");
+                            }
+                        } catch (error) {
+                            console.error("Import failed:", error);
+                            App.ToastManager.show(`Import failed: ${error.message}`, 'error');
+                        }
+                    };
+                    reader.readAsText(file);
+                    event.target.value = '';
+                },
+                resetApp() {
+                    App.ui.showConfirmModal(
+                        'Reset Application?',
+                        'All your tasks, notes, and settings will be permanently deleted. This cannot be undone.',
+                        () => {
+                            localStorage.removeItem('academiaOSState_v4');
+                            App.ToastManager.show('Application has been reset. Reloading...', 'success');
+                            setTimeout(() => window.location.reload(), 1500);
+                        }
+                    );
+                },
+            },
+            
+            util: {
+                getDefaultState: () => ({ 
+                    tasks: [], notes: {}, resources: [], 
+                    finances: {
+                        budgetStartDate: null,
+                        expenses: []
+                    },
+                    player: { xp: 0, level: 1 },
+                    profile: {
+                        name: 'Hun Andrei Q. Diaz',
+                        grade: 'Newton-G11-Stem Nursing',
+                        id: '2091669',
+                        email: '2091669@g.cu.edu.ph',
+                        lrn: '405197150378',
+                        birthDate: 'NOV. 30, 2008'
+                    },
+                    settings: { 
+                        theme: 'emerald-matrix',
+                        activePage: 'home-page',
+                        apiKey: '',
+                        budgetAmount: 500,
+                        budgetType: 'weekly',
+                        budgetCategories: ["Travel", "Food", "Project", "Other"],
+                        customLinks: [],
+                        clockStyle: 'digital-block',
+                        gamificationEnabled: true,
+                        lastCramAlertDate: null,
+                        lastDigestDate: null,
+                    },
+                    history: {
+                        completedTasks: [],
+                        budgetPeriods: []
+                    }
+                }),
+                assignSubjectColors: () => App.config.subjects.forEach((s, i) => App.config.subjectColors[s] = App.config.colorPalette[i % App.config.colorPalette.length]),
+                getSubjectColor: s => App.config.subjectColors[s] || '#888',
+                getSubjectIcon(subject) {
+                    const lowerSubject = subject.toLowerCase();
+                    if (lowerSubject.includes('math')) return 'ph-calculator';
+                    if (lowerSubject.includes('science')) return 'ph-atom';
+                    if (lowerSubject.includes('philosophy')) return 'ph-brain';
+                    if (lowerSubject.includes('communication')) return 'ph-microphone-stage';
+                    if (lowerSubject.includes('culture')) return 'ph-globe-hemisphere-west';
+                    if (lowerSubject.includes('disaster')) return 'ph-house-line';
+                    if (lowerSubject.includes('development')) return 'ph-person-simple-walk';
+                    if (lowerSubject.includes('education')) return 'ph-basketball';
+                    return 'ph-book-open'; // Default icon
+                },
+                getGreeting: now => {
+                    const h = now.hour();
+                    if (h < 5) return `Still up, ${App.state.profile.name.split(' ')[0]}?`;
+                    if (h < 12) return `Good Morning, ${App.state.profile.name.split(' ')[0]}!`;
+                    if (h < 18) return `Good Afternoon, ${App.state.profile.name.split(' ')[0]}!`;
+                    return `Good Evening, ${App.state.profile.name.split(' ')[0]}!`;
+                },
+                sanitizeHTML: (str) => {
+                    if (!str) return '';
+                    const temp = document.createElement('div');
+                    temp.textContent = str;
+                    return temp.innerHTML;
+                },
+                hexToRgb(hex) {
+                    if (!hex) return null;
+                    let result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+                    return result ? {
+                        r: parseInt(result[1], 16),
+                        g: parseInt(result[2], 16),
+                        b: parseInt(result[3], 16)
+                    } : null;
+                },
+                numberToDotMatrix(num) {
+                    const font = {
+                        '0': [[1,1,1],[1,0,1],[1,0,1],[1,0,1],[1,1,1]],
+                        '1': [[0,1,0],[1,1,0],[0,1,0],[0,1,0],[1,1,1]],
+                        '2': [[1,1,1],[0,0,1],[1,1,1],[1,0,0],[1,1,1]],
+                        '3': [[1,1,1],[0,0,1],[0,1,1],[0,0,1],[1,1,1]],
+                        '4': [[1,0,1],[1,0,1],[1,1,1],[0,0,1],[0,0,1]],
+                        '5': [[1,1,1],[1,0,0],[1,1,1],[0,0,1],[1,1,1]],
+                        '6': [[1,1,1],[1,0,0],[1,1,1],[1,0,1],[1,1,1]],
+                        '7': [[1,1,1],[0,0,1],[0,1,0],[0,1,0],[0,1,0]],
+                        '8': [[1,1,1],[1,0,1],[1,1,1],[1,0,1],[1,1,1]],
+                        '9': [[1,1,1],[1,0,1],[1,1,1],[0,0,1],[1,1,1]]
+                    };
+                    return font[num] || Array(5).fill(Array(3).fill(0));
+                }
+            },
+
+            ui: {
+                navigateTo(pageId) {
+                    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                    document.getElementById(pageId)?.classList.add('active');
+                    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                    document.querySelector(`.nav-btn[data-page="${pageId}"]`)?.classList.add('active');
+                    App.state.settings.activePage = pageId;
+                    App.saveState();
+                },
+                applyTheme(themeId) {
+                    const theme = App.config.themes[themeId];
+                    if (!theme) {
+                        console.error(`Theme "${themeId}" not found.`);
+                        return;
+                    }
+                    const root = document.documentElement;
+                    for (const [key, value] of Object.entries(theme.colors)) {
+                        root.style.setProperty(key, value);
+                    }
+                    document.body.style.backgroundImage = `url('${theme.backgroundUrl}')`;
+                    const primaryRgb = App.util.hexToRgb(theme.colors['--accent-primary']);
+                    const secondaryRgb = App.util.hexToRgb(theme.colors['--accent-secondary']);
+                    if (primaryRgb) root.style.setProperty('--accent-primary-rgb', `${primaryRgb.r}, ${primaryRgb.g}, ${primaryRgb.b}`);
+                    if (secondaryRgb) root.style.setProperty('--accent-secondary-rgb', `${secondaryRgb.r}, ${secondaryRgb.g}, ${secondaryRgb.b}`);
+                },
+                showConfirmModal(title, message, onConfirm) {
+                    const modal = App.elements.modals.confirm;
+                    modal.querySelector('#confirm-title').textContent = title;
+                    modal.querySelector('#confirm-message').textContent = message;
+                    
+                    const okBtn = modal.querySelector('#confirm-ok-btn');
+                    const cancelBtn = modal.querySelector('#confirm-cancel-btn');
+
+                    const newOkBtn = okBtn.cloneNode(true);
+                    okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+
+                    newOkBtn.addEventListener('click', () => {
+                        onConfirm();
+                        App.ui.hideConfirmModal();
+                    }, { once: true });
+
+                    cancelBtn.addEventListener('click', () => App.ui.hideConfirmModal(), { once: true });
+
+                    modal.classList.add('visible');
+                },
+                hideConfirmModal: () => App.elements.modals.confirm.classList.remove('visible'),
+                showClassHub(subject) {
+                    App.currentClassHubSubject = subject;
+                    document.getElementById('class-hub-title').textContent = subject;
+                    App.render.classHub();
+                    this.switchHubTab('assignments');
+                    App.elements.modals.classHub.classList.add('visible');
+                },
+                hideClassHub:() => App.elements.modals.classHub.classList.remove('visible'),
+                switchHubTab(tabId) {
+                    const modal = App.elements.modals.classHub;
+                    modal.querySelectorAll('.tab-content, .tab-btn').forEach(el => el.classList.remove('active'));
+                    modal.querySelector(`#${tabId}-tab`).classList.add('active');
+                    modal.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
+                },
+                showFormModal(title, formHtml) { 
+                    document.getElementById('form-modal-title').textContent = title;
+                    document.getElementById('form-modal-form').innerHTML = formHtml;
+                    App.elements.modals.form.classList.add('visible'); 
+                },
+                hideFormModal:() => App.elements.modals.form.classList.remove('visible'),
+                showTaskForm(taskId = null) {
+                    const task = taskId ? App.state.tasks.find(t => t.id === taskId) : null;
+                    const subject = task ? task.subject : App.currentClassHubSubject;
+                    App.tempTask = {
+                        id: task?.id || `task_${Date.now()}`,
+                        subject: subject,
+                        completed: task?.completed || false,
+                        completedAt: task?.completedAt || null,
+                        xpAwarded: task?.xpAwarded || false
+                    };
+                    App.tempDate = task ? dayjs(task.dueDate) : dayjs().add(1, 'day');
+                    const title = task ? "Edit Task" : "Add New Task";
+                    const formHtml = `
+                        <input type="hidden" name="formType" value="task">
+                        <div class="form-group">
+                            <label for="task-title">Title</label>
+                            <input type="text" id="task-title" name="title" class="form-control" value="${App.util.sanitizeHTML(task?.title || '')}" required>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn">Set Due Date <i class="ph-bold ph-caret-right"></i></button>
+                        </div>`;
+                    this.showFormModal(title, formHtml);
+                },
+                showExpenseForm() {
+                    const title = "Add Expense";
+                    const categories = App.state.settings.budgetCategories.map(cat => `<div class="dropdown-option" data-value="${App.util.sanitizeHTML(cat)}">${App.util.sanitizeHTML(cat)}</div>`).join('');
+                    const formHtml = `
+                        <input type="hidden" name="formType" value="expense">
+                        <div class="form-group">
+                            <label for="exp-desc">Description</label>
+                            <input type="text" id="exp-desc" name="description" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="expense-category-dropdown">Category</label>
+                            <div class="custom-dropdown">
+                                <button type="button" class="dropdown-trigger" id="expense-category-dropdown" data-value="${App.state.settings.budgetCategories[0]}">
+                                    <span>${App.state.settings.budgetCategories[0]}</span>
+                                </button>
+                                <div class="dropdown-panel">${categories}</div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="exp-amount">Amount (₱)</label>
+                            <input type="number" id="exp-amount" name="amount" class="form-control" required step="0.01" min="0">
+                        </div>
+                        <div class="form-actions"><button type="submit" class="btn">Add Expense</button></div>`;
+                    this.showFormModal(title, formHtml);
+                },
+                showResourceForm(){
+                    const title = "Add Resource";
+                    const formHtml = `
+                        <input type="hidden" name="formType" value="resource">
+                        <div class="form-group">
+                            <label for="res-title">Title</label>
+                            <input type="text" id="res-title" name="title" class="form-control" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="resource-type-dropdown">Type</label>
+                            <div class="custom-dropdown">
+                                <button type="button" class="dropdown-trigger" id="resource-type-dropdown" data-value="link">
+                                    <span>Website Link</span>
+                                </button>
+                                <div class="dropdown-panel">
+                                    <div class="dropdown-option" data-value="link">Website Link</div>
+                                    <div class="dropdown-option" data-value="gdrive">Google Drive</div>
+                                    <div class="dropdown-option" data-value="onedrive">OneDrive</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="res-url">URL / Link</label>
+                            <input type="url" id="res-url" name="url" class="form-control" placeholder="https://..." required>
+                            <p class="help-text">For cloud files, get a shareable link.</p>
+                        </div>
+                        <div class="form-actions"><button type="submit" class="btn">Save Resource</button></div>`;
+                    this.showFormModal(title, formHtml);
+                },
+                showDatePickerModal:() => { App.render.datePicker(); App.elements.modals.datePicker.classList.add('visible'); },
+                hideDatePickerModal:() => App.elements.modals.datePicker.classList.remove('visible'),
+                showFocusTimerModal:() => App.elements.modals.focusTimer.classList.add('visible'),
+                hideFocusTimerModal:() => App.elements.modals.focusTimer.classList.remove('visible'),
+                showStudySessionModal:() => App.elements.modals.studySession.classList.add('visible'),
+                hideStudySessionModal:() => App.elements.modals.studySession.classList.remove('visible'),
+                showProfileDetailsModal:() => { App.render.profileDetailsModal(); App.elements.modals.profileDetails.classList.add('visible'); },
+                hideProfileDetailsModal:() => App.elements.modals.profileDetails.classList.remove('visible'),
+                showEmailDigestModal:() => App.elements.modals.emailDigest.classList.add('visible'),
+                hideEmailDigestModal:() => App.elements.modals.emailDigest.classList.remove('visible'),
+                showLoader:() => { if(App.elements.modals.loader) App.elements.modals.loader.classList.add('visible'); },
+                hideLoader:() => { if(App.elements.modals.loader) App.elements.modals.loader.classList.remove('visible'); }
+            },
+
+            render: {
+                all() { 
+                    this.homePage(); 
+                    this.schedulePage(); 
+                    this.financesPage(); 
+                    this.settingsPage();
+                },
+                homePage() {
+                    const homeEl = App.elements.pages.home;
+                    if(!homeEl) return;
+                    homeEl.innerHTML = `
+                        <div class="page-header">
+                            <h1 class="page-title">Home</h1>
+                            <div id="mini-clock" style="font-size: 1rem; font-weight: 600; color: var(--text-secondary);"></div>
+                        </div>
+                        <div class="page-content">
+                            <div class="widget-card">
+                                <h2 id="greeting">${App.util.getGreeting(dayjs())}</h2>
+                                <div id="time-now" class="clock-container"></div>
+                                <div id="date-now" style="text-align: center;">${dayjs().format('dddd, MMMM D')}</div>
+                            </div>
+                            <div class="live-status-banner">
+                                <div id="status-text"><span id="status-indicator"></span>Initializing...</div>
+                                <div id="status-detail">...</div>
+                            </div>
+                            <div class="home-widgets-grid">
+                                <div class="widget-card" id="task-spotlight-widget">
+                                    <h3><i class="ph-fill ph-shooting-star"></i>Spotlight</h3>
+                                    <div id="task-spotlight-content">${this.taskSpotlightHTML()}</div>
+                                </div>
+                                ${App.state.settings.gamificationEnabled ? `<div class="widget-card" id="profile-widget">${this.profileWidgetHTML()}</div>` : ''}
+                            </div>
+                        </div>`;
+                    this.liveStatus();
+                },
+                liveStatus() {
+                    const now = dayjs();
+                    const text = document.querySelector('#status-text');
+                    const detail = document.querySelector('#status-detail');
+                    if(!text || !detail) return;
+                    const dayKey = Object.keys(App.config.dayOrder).find(key => App.config.dayOrder[key] === now.day());
+                    
+                    const parseTime = (d, t) => dayjs(`${d.format('YYYY-MM-DD')} ${t}`, 'YYYY-MM-DD hh:mmA');
+
+                    const getCurrentClass = () => {
+                        if (!dayKey) return null;
+                        return App.config.scheduleData.find(c => {
+                            if (!c.days.includes(dayKey)) return false;
+                            const [startTimeStr, endTimeStr] = c.time.split('-');
+                            const start = parseTime(now, startTimeStr);
+                            const end = parseTime(now, endTimeStr);
+                            return now.isBetween(start, end, null, '[]');
+                        });
+                    };
+
+                    const getNextClass = () => {
+                        if (!dayKey) return null;
+                        const classesToday = App.config.scheduleData
+                            .filter(c => c.days.includes(dayKey))
+                            .map(c => ({...c, startTime: parseTime(now, c.time.split('-')[0]) }))
+                            .filter(c => c.startTime.isAfter(now))
+                            .sort((a,b) => a.startTime.diff(b.startTime));
+                        return classesToday[0];
+                    };
+
+                    const currentClass = getCurrentClass();
+                    if(currentClass){
+                        text.innerHTML = `<span id="status-indicator" class="status-indicator live"></span>Class in Progress`;
+                        detail.textContent = `${currentClass.subject} until ${parseTime(now, currentClass.time.split('-')[1]).format('h:mm A')}`;
+                    } else {
+                        const nextClass = getNextClass();
+                        if(nextClass){
+                            text.innerHTML = `<span id="status-indicator" class="status-indicator"></span>Up Next`;
+                            detail.textContent = `${nextClass.subject} at ${parseTime(now, nextClass.time.split('-')[0]).format('h:mm A')}`;
+                        } else {
+                            text.innerHTML = `<span id="status-indicator" class="status-indicator"></span>All Clear`;
+                            detail.textContent = `No more classes today. Enjoy your day!`;
+                        }
+                    }
+                },
+                schedulePage() {
+                    const scheduleEl = App.elements.pages.schedule;
+                    if(!scheduleEl) return;
+                    
+                    const now = dayjs();
+                    const todayDayJS = now.day(); 
+                    const todayKey = Object.keys(App.config.dayOrder).find(key => App.config.dayOrder[key] === todayDayJS);
+
+                    const grouped = App.config.scheduleData.reduce((acc, c) => {
+                        c.days.split('').forEach(d => {
+                            if (!acc[d]) acc[d] = [];
+                            acc[d].push(c);
+                        });
+                        return acc;
+                    }, {});
+
+                    let sortedDayKeys = Object.keys(grouped).sort((a,b) => App.config.dayOrder[a] - App.config.dayOrder[b]);
+                    
+                    if (todayKey && sortedDayKeys.includes(todayKey)) {
+                        sortedDayKeys = [todayKey, ...sortedDayKeys.filter(k => k !== todayKey)];
+                    }
+
+                    let html = sortedDayKeys.map(key => `
+                        <div class="schedule-day">
+                            <h3>${App.config.dayMap[key]} ${key === todayKey ? '(Today)' : ''}</h3>
+                            <div class="schedule-grid">
+                            ${grouped[key].sort((a,b) => {
+                                const timeA = dayjs(`${now.format('YYYY-MM-DD')} ${a.time.split('-')[0]}`, 'YYYY-MM-DD hh:mmA');
+                                const timeB = dayjs(`${now.format('YYYY-MM-DD')} ${b.time.split('-')[0]}`, 'YYYY-MM-DD hh:mmA');
+                                return timeA.diff(timeB);
+                            }).map(c => {
+                                const iconClass = App.util.getSubjectIcon(c.subject);
+                                return `
+                                <div class="schedule-class-item" data-subject="${App.util.sanitizeHTML(c.subject)}" style="--subject-color: ${App.util.getSubjectColor(c.subject)};">
+                                    <div class="class-item-header">
+                                        <i class="${iconClass}"></i>
+                                        <h4 class="class-subject">${App.util.sanitizeHTML(c.subject)}</h4>
+                                    </div>
+                                    <div class="class-item-body">
+                                        <div class="class-time">${App.util.sanitizeHTML(c.time)}</div>
+                                    </div>
+                                </div>`;
+                            }).join('')}
+                            </div>
+                        </div>`).join('');
+                    scheduleEl.innerHTML = `<div class="page-header"><h1 class="page-title">Schedule</h1><button id="plan-study-session-btn" class="btn btn-ai"><span class="spinner"></span><span class="btn-text">✨ Plan Study Session</span></button></div><div class="page-content">${html || `<div class="empty-placeholder"><i class="ph-bold ph-calendar-x"></i><p>No classes scheduled.</p></div>`}</div>`;
+                },
+                financesPage() {
+                    const financesEl = App.elements.pages.finances;
+                    if(!financesEl) return;
+                    
+                    const { budgetAmount, budgetType, budgetCategories } = App.state.settings;
+                    const expenses = App.state.finances.expenses; 
+                    const totalSpent = expenses.reduce((sum, e) => sum + e.amount, 0);
+
+                    const budgetHTML = budgetCategories.map(cat => {
+                        const spent = expenses.filter(e => e.category === cat).reduce((sum, e) => sum + e.amount, 0);
+                        return `
+                        <div class="budget-category">
+                            <div class="budget-category-header">
+                                <span>${App.util.sanitizeHTML(cat)}</span>
+                                <span>₱${spent.toFixed(2)}</span>
+                            </div>
+                        </div>`;
+                    }).join('');
+                    
+                    financesEl.innerHTML = `
+                        <div class="page-header"><h1 class="page-title">Finances</h1><button id="add-expense-btn" class="btn"><i class="ph-bold ph-plus"></i> Add</button></div>
+                        <div class="page-content">
+                            <div class="widget-card">
+                                <h3>${budgetType.charAt(0).toUpperCase() + budgetType.slice(1)} Budget</h3>
+                                <div style="font-size: 1.5rem; font-weight: 700;">₱${totalSpent.toFixed(2)} <span style="font-size:1rem; color:var(--text-secondary);">/ ₱${budgetAmount.toFixed(2)}</span></div>
+                                <div class="progress-bar-container" style="margin-top: 0.5rem;"><div class="progress-bar" style="width: ${Math.min(100, (totalSpent/budgetAmount)*100)}%;"></div></div>
+                            </div>
+                            <div class="widget-card">
+                                <h3>Spending Breakdown</h3>
+                                <div class="budget-summary">${budgetHTML || `<div class="empty-placeholder" style="min-height: 50px;"><p>No spending yet.</p></div>`}</div>
+                            </div>
+                        </div>`;
+                },
+                settingsPage() {
+                    const settingsEl = App.elements.pages.settings;
+                    if(!settingsEl) return;
+
+                    const settings = App.state.settings;
+                    const profile = App.state.profile;
+
+                    const themesHtml = Object.entries(App.config.themes).map(([id, theme]) => `
+                        <div class="theme-option ${settings.theme === id ? 'active' : ''}" data-theme-id="${id}">
+                            <div class="theme-preview">
+                                <div style="background-color: ${theme.colors['--bg-main']};"></div>
+                                <div style="background-color: ${theme.colors['--text-primary']};"></div>
+                                <div style="background-color: ${theme.colors['--accent-secondary']};"></div>
+                                <div style="background-color: ${theme.colors['--accent-primary']};"></div>
+                            </div>
+                            <p>${theme.name}</p>
+                        </div>
+                    `).join('');
+                    
+                    const categoriesHtml = settings.budgetCategories.map(cat => `
+                        <div class="category-item">
+                            <span>${App.util.sanitizeHTML(cat)}</span>
+                            <button class="delete-category-btn" data-category="${App.util.sanitizeHTML(cat)}"><i class="ph-bold ph-trash"></i></button>
+                        </div>
+                    `).join('');
+
+                    const clockOptionsHtml = App.config.clockStyles.map(style => `
+                        <div class="dropdown-option" data-value="${style.id}">${style.name}</div>
+                    `).join('');
+                    
+                    const selectedClockStyle = App.config.clockStyles.find(s => s.id === settings.clockStyle)?.name || 'Digital Block';
+
+                    const customLinksHtml = settings.customLinks.map(link => `
+                        <div class="category-item">
+                            <a href="${App.util.sanitizeHTML(link.url)}" target="_blank">${App.util.sanitizeHTML(link.title)}</a>
+                            <button class="delete-link-btn" data-url="${App.util.sanitizeHTML(link.url)}"><i class="ph-bold ph-trash"></i></button>
+                        </div>
+                    `).join('');
+
+                    settingsEl.innerHTML = `
+                        <div class="page-header"><h1 class="page-title">Settings</h1></div>
+                        <div class="page-content">
+                            <div class="settings-section">
+                                <h3>Personal</h3>
+                                <div class="form-group">
+                                    <label for="profile-name-input">Student Name</label>
+                                    <input type="text" id="profile-name-input" class="form-control" value="${App.util.sanitizeHTML(profile.name)}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profile-grade-input">Grade & Strand</label>
+                                    <input type="text" id="profile-grade-input" class="form-control" value="${App.util.sanitizeHTML(profile.grade)}">
+                                </div>
+                            </div>
+                            <div class="settings-section">
+                                <h3>Appearance</h3>
+                                <div class="form-group">
+                                    <label for="clock-style-dropdown">Clock Style</label>
+                                    <div class="custom-dropdown">
+                                        <button type="button" class="dropdown-trigger" id="clock-style-dropdown" data-value="${settings.clockStyle}">
+                                            <span>${selectedClockStyle}</span>
+                                        </button>
+                                        <div class="dropdown-panel">${clockOptionsHtml}</div>
+                                    </div>
+                                </div>
+                                <div class="theme-picker">${themesHtml}</div>
+                            </div>
+                            <div class="settings-section">
+                                <h3>Gamification</h3>
+                                <div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
+                                    <label for="gamification-toggle" style="margin: 0;">Enable XP & Levels</label>
+                                    <input type="checkbox" id="gamification-toggle" class="form-control" style="width: auto;" ${settings.gamificationEnabled ? 'checked' : ''}>
+                                </div>
+                            </div>
+                            <div class="settings-section">
+                                <h3>Finances</h3>
+                                <div class="form-group">
+                                    <label>Budget Period</label>
+                                    <div class="toggle-switch">
+                                        <button class="budget-type-btn ${settings.budgetType === 'daily' ? 'active' : ''}" data-type="daily">Daily</button>
+                                        <button class="budget-type-btn ${settings.budgetType === 'weekly' ? 'active' : ''}" data-type="weekly">Weekly</button>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="budget-amount-input">Budget Amount (₱)</label>
+                                    <input type="number" id="budget-amount-input" class="form-control" value="${settings.budgetAmount}">
+                                </div>
+                                <div class="form-group">
+                                    <label>Budget Categories</label>
+                                    <div class="category-list">${categoriesHtml}</div>
+                                    <div class="form-actions" style="justify-content: space-between; margin-top: 1rem;">
+                                        <input type="text" id="new-category-input" class="form-control" placeholder="New category name..." style="flex: 1;">
+                                        <button id="add-category-btn" class="btn"><i class="ph-bold ph-plus"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="settings-section">
+                                <h3>AI Configuration</h3>
+                                <div class="form-group">
+                                    <label for="api-key-input">Gemini API Key</label>
+                                    <input type="password" id="api-key-input" class="form-control" value="${settings.apiKey}" placeholder="Paste your key here">
+                                </div>
+                            </div>
+                            <div class="settings-section">
+                                <h3>Links</h3>
+                                <a href="https://cyberaccount.cu.edu.ph/" target="_blank" class="btn" style="width: 100%; justify-content: center; margin-bottom: 1rem;">CU Portal</a>
+                                <div class="category-list">${customLinksHtml}</div>
+                                <div class="form-actions" style="justify-content: space-between; margin-top: 1rem; flex-wrap: nowrap; gap: 0.5rem;">
+                                    <input type="text" id="new-link-title-input" class="form-control" placeholder="Link Title">
+                                    <input type="url" id="new-link-url-input" class="form-control" placeholder="https://...">
+                                    <button id="add-link-btn" class="btn"><i class="ph-bold ph-plus"></i></button>
+                                </div>
+                            </div>
+                             <div class="settings-section">
+                                <h3>History</h3>
+                                <div id="history-log" class="history-log">${this.historyLogHTML()}</div>
+                            </div>
+                            <div class="form-actions" style="justify-content: flex-start; margin-top: 2rem;">
+                                <button id="save-settings-btn" class="btn">Save All Settings</button>
+                            </div>
+                            <div class="settings-section">
+                                <h3>Data Management</h3>
+                                <p class="help-text">Save your app data to a file or import a previous backup.</p>
+                                <div class="form-actions" style="justify-content: flex-start; gap: 1rem;">
+                                    <button id="export-data-btn" class="btn btn-secondary"><i class="ph ph-download-simple"></i> Export</button>
+                                    <button id="import-data-btn" class="btn btn-secondary"><i class="ph ph-upload-simple"></i> Import</button>
+                                </div>
+                            </div>
+                            <div class="settings-section">
+                                <h3>Danger Zone</h3>
+                                <p class="help-text">This will permanently delete all your data and reset the app.</p>
+                                <div class="form-actions" style="justify-content: flex-start;">
+                                    <button id="reset-app-btn" class="btn btn-danger">Reset Application</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                },
+                classHub() { 
+                    this.assignments(); 
+                    this.notes(); 
+                    this.resources(); 
+                },
+                assignments() {
+                    const tasks = App.state.tasks.filter(t => t.subject === App.currentClassHubSubject).sort((a,b) => (a.completed - b.completed) || dayjs(a.dueDate).diff(b.dueDate));
+                    let html = tasks.map(task => {
+                        const isOverdue = !task.completed && dayjs().isAfter(dayjs(task.dueDate));
+                        return `
+                            <div class="task-item ${task.completed ? 'completed' : ''}" data-id="${App.util.sanitizeHTML(task.id)}">
+                                <div class="task-checkbox"><i class="ph-bold ph-check"></i></div>
+                                <div class="task-details">
+                                    <div class="task-title">${App.util.sanitizeHTML(task.title)}</div>
+                                    <div class="task-meta">
+                                        <span class="task-due-date ${isOverdue ? 'overdue' : ''}">Due ${dayjs(task.dueDate).fromNow()}</span>
+                                    </div>
+                                </div>
+                                ${App.state.settings.gamificationEnabled ? `<button class="btn btn-secondary btn-focus-timer" style="padding:0.5rem;" title="Start Focus Session"><i class="ph-bold ph-timer"></i></button>` : ''}
+                            </div>`;
+                    }).join('');
+                    document.getElementById('assignments-list').innerHTML = html || `<div class="empty-placeholder"><i class="ph-bold ph-check-square"></i><p>No tasks for this subject.</p></div>`;
+                },
+                notes() { 
+                    const noteTextarea = document.getElementById('note-textarea');
+                    if (noteTextarea) {
+                        noteTextarea.value = App.state.notes[App.currentClassHubSubject] || ''; 
+                    }
+                },
+                resources() {
+                    const resources = App.state.resources.filter(r => r.subject === App.currentClassHubSubject);
+                    const typeIcons = {
+                        gdrive: '<i class="ph-fill ph-google-drive-logo"></i>',
+                        onedrive: '<i class="ph-fill ph-microsoft-outlook-logo"></i>',
+                        link: '<i class="ph-bold ph-link"></i>'
+                    };
+                    let html = resources.map(res => `
+                        <div class="resource-item" data-id="${App.util.sanitizeHTML(res.id)}">
+                            ${typeIcons[res.type] || typeIcons['link']}
+                            <div class="resource-details">
+                                <a href="${App.util.sanitizeHTML(res.url)}" target="_blank" rel="noopener noreferrer" class="resource-title">${App.util.sanitizeHTML(res.title)}</a>
+                                <span class="resource-url">${App.util.sanitizeHTML(res.url)}</span>
+                            </div>
+                            <button class="btn btn-secondary delete-resource-btn" style="margin-left:auto; padding:0.5rem;" title="Delete Resource"><i class="ph-bold ph-trash"></i></button>
+                        </div>
+                    `).join('');
+                    document.getElementById('resource-list').innerHTML = html || `<div class="empty-placeholder"><i class="ph-bold ph-link"></i><p>No resources saved.</p></div>`;
+                },
+                taskSpotlightHTML() {
+                    const upcoming = App.state.tasks
+                        .filter(t => !t.completed)
+                        .sort((a,b) => dayjs(a.dueDate).diff(dayjs(b.dueDate)))
+                        .slice(0, 3);
+                    if (upcoming.length === 0) return `<div class="empty-placeholder"><i class="ph-bold ph-sparkle"></i><p>All clear! No upcoming tasks.</p></div>`;
+                    return upcoming.map(task => `
+                        <div class="task-item" data-id="${App.util.sanitizeHTML(task.id)}">
+                            <div class="task-checkbox"><i class="ph-bold ph-check"></i></div>
+                            <div class="task-details">
+                                <div class="task-title">${App.util.sanitizeHTML(task.title)}</div>
+                                <div class="task-meta">
+                                    <span style="color:${App.util.getSubjectColor(task.subject)}; font-weight: 600;">${App.util.sanitizeHTML(task.subject)}</span> 
+                                    · <span>Due ${dayjs(task.dueDate).fromNow()}</span>
+                                </div>
+                            </div>
+                        </div>`).join('');
+                },
+                profileWidgetHTML() {
+                    const { level, xp } = App.state.player;
+                    const xpToLevelUp = App.config.gamification.xpToLevelUp(level);
+                    const xpPercentage = xpToLevelUp > 0 ? (xp / xpToLevelUp) * 100 : 0;
+                    return `
+                        <h3><i class="ph-fill ph-user-circle"></i>Profile</h3>
+                        <div style="flex-grow:1; display:flex; flex-direction:column; justify-content:center;">
+                            <span class="level-display">Level ${level}</span>
+                            <div class="xp-bar-container"><div class="xp-bar" style="width:${xpPercentage}%"></div></div>
+                            <span class="xp-text">${xp} / ${xpToLevelUp} XP</span>
+                        </div>`;
+                },
+                profileWidget() {
+                    const widget = document.getElementById('profile-widget');
+                    if (widget) {
+                        widget.innerHTML = this.profileWidgetHTML();
+                    }
+                },
+                profileDetailsModal() {
+                    const profile = App.state.profile;
+                    const listHTML = `
+                        <ul class="profile-details-list">
+                            <li><i class="ph-fill ph-user"></i><div><strong>${App.util.sanitizeHTML(profile.name)}</strong><span>Student Name</span></div></li>
+                            <li><i class="ph-fill ph-books"></i><div><strong>${App.util.sanitizeHTML(profile.grade)}</strong><span>Grade & Strand</span></div></li>
+                            <li><i class="ph-fill ph-identification-card"></i><div><strong>${App.util.sanitizeHTML(profile.id)}</strong><span>School ID</span></div></li>
+                            <li><i class="ph-fill ph-at"></i><div><strong>${App.util.sanitizeHTML(profile.email)}</strong><span>School Email</span></div></li>
+                            <li><i class="ph-fill ph-fingerprint"></i><div><strong>${App.util.sanitizeHTML(profile.lrn)}</strong><span>LRN</span></div></li>
+                            <li><i class="ph-fill ph-gift"></i><div><strong>${App.util.sanitizeHTML(profile.birthDate)}</strong><span>Date of Birth</span></div></li>
+                        </ul>`;
+                    document.getElementById('profile-details-modal-body').innerHTML = listHTML;
+                },
+                focusTimer() {
+                    const minutes = Math.floor(App.focusTimer.secondsRemaining / 60);
+                    const seconds = App.focusTimer.secondsRemaining % 60;
+                    document.getElementById('focus-timer-display').textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                    const task = App.state.tasks.find(t => t.id === App.focusTimer.taskId);
+                    if (task) {
+                        document.getElementById('focus-timer-task-title').textContent = `Focusing on: ${App.util.sanitizeHTML(task.title)}`;
+                    }
+                },
+                datePicker() {
+                    const date = App.tempDate;
+                    const gridBody = App.elements.modals.datePicker.querySelector('#calendar-grid-body');
+                    const gridHeader = App.elements.modals.datePicker.querySelector('#calendar-grid-header');
+                    
+                    App.elements.modals.datePicker.querySelector('#calendar-month-year').textContent = date.format('MMMM YYYY');
+                    
+                    gridHeader.innerHTML = dayjs.weekdaysShort().map(d => `<div class="calendar-day-name">${d}</div>`).join('');
+                    
+                    gridBody.innerHTML = '';
+                    const startOfMonth = date.startOf('month');
+                    const firstDayOfWeek = startOfMonth.day(); 
+                    
+                    let dayIter = startOfMonth.subtract(firstDayOfWeek, 'day');
+                    let html = '';
+                    for (let i = 0; i < 42; i++) {
+                        const isCurrentMonth = dayIter.isSame(startOfMonth, 'month');
+                        const isSelected = dayIter.isSame(date, 'day');
+                        html += `<button class="calendar-day ${isSelected ? 'selected' : ''} ${!isCurrentMonth ? 'other-month' : ''}" data-date="${dayIter.format('YYYY-MM-DD')}">${dayIter.date()}</button>`;
+                        dayIter = dayIter.add(1, 'day');
+                    }
+                    gridBody.innerHTML = html;
+                },
+                clock(now) {
+                    const container = document.getElementById('time-now');
+                    if (!container) return;
+                    const style = App.state.settings.clockStyle;
+                    
+                    switch(style) {
+                        case 'analog':
+                            const hours = now.hour();
+                            const minutes = now.minute();
+                            const seconds = now.second();
+                            const hourDeg = (hours % 12 + minutes / 60) * 30;
+                            const minuteDeg = (minutes + seconds / 60) * 6;
+                            const secondDeg = seconds * 6;
+                            container.innerHTML = `
+                                <div class="analog-clock">
+                                    <div class="hand hour-hand" style="transform: rotate(${hourDeg}deg);"></div>
+                                    <div class="hand minute-hand" style="transform: rotate(${minuteDeg}deg);"></div>
+                                    <div class="hand second-hand" style="transform: rotate(${secondDeg}deg);"></div>
+                                </div>`;
+                            break;
+                        case 'text':
+                            const h = now.hour();
+                            const m = now.minute();
+                            const words = ["twelve", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve"];
+                            let text = "It's ";
+                            if (m < 5) text += `around ${words[h%12]}`;
+                            else if (m < 10) text += `five past ${words[h%12]}`;
+                            else if (m < 20) text += `quarter past ${words[h%12]}`;
+                            else if (m < 35) text += `half past ${words[h%12]}`;
+                            else if (m < 50) text += `quarter to ${words[(h+1)%12]}`;
+                            else text += `almost ${words[(h+1)%12]}`;
+                            container.innerHTML = `<div class="text-clock">${text}</div>`;
+                            break;
+                        case 'binary':
+                            const h_bin = now.hour().toString(2).padStart(5, '0');
+                            const m_bin = now.minute().toString(2).padStart(6, '0');
+                            const s_bin = now.second().toString(2).padStart(6, '0');
+                            const renderCol = (binaryStr) => `<div class="binary-col">${binaryStr.split('').map(bit => `<div class="binary-dot ${bit === '1' ? 'on' : ''}"></div>`).join('')}</div>`;
+                            container.innerHTML = `<div class="binary-clock">${renderCol(h_bin)}${renderCol(m_bin)}${renderCol(s_bin)}</div>`;
+                            break;
+                        case 'minimalist':
+                            container.innerHTML = `<div style="font-size: 3rem; font-weight: 700; font-family: var(--font-family-clock);">${now.format('HH:mm')}</div>`;
+                            break;
+                        case 'flip':
+                            container.innerHTML = `
+                                <div class="flip-clock">
+                                    <div class="flip-card"><span>${now.format('hh')[0]}</span></div>
+                                    <div class="flip-card"><span>${now.format('hh')[1]}</span></div>
+                                    <span class="clock-colon">:</span>
+                                    <div class="flip-card"><span>${now.format('mm')[0]}</span></div>
+                                    <div class="flip-card"><span>${now.format('mm')[1]}</span></div>
+                                    <span class="clock-colon">:</span>
+                                    <div class="flip-card"><span>${now.format('ss')[0]}</span></div>
+                                    <div class="flip-card"><span>${now.format('ss')[1]}</span></div>
+                                </div>`;
+                            break;
+                        case 'dot-matrix':
+                            const timeStr = now.format('HH:mm:ss');
+                            const dotMatrixHtml = timeStr.split('').map(char => {
+                                if (char === ':') {
+                                    const colonMatrix = [[0],[1],[0],[1],[0]];
+                                    return `<div class="dot-matrix-clock" style="grid-template-columns: repeat(1, 4px);">${colonMatrix.flat().map(dot => `<div class="dot ${dot ? 'on' : ''}"></div>`).join('')}</div>`;
+                                }
+                                const matrix = App.util.numberToDotMatrix(char);
+                                return `<div class="dot-matrix-clock">${matrix.flat().map(dot => `<div class="dot ${dot ? 'on' : ''}"></div>`).join('')}</div>`;
+                            }).join('');
+                            container.innerHTML = `<div style="display: flex; gap: 8px; align-items: center;">${dotMatrixHtml}</div>`;
+                            break;
+                        case 'radial':
+                            const s_rad = now.second() / 60;
+                            const m_rad = (now.minute() + s_rad) / 60;
+                            const h_rad = (now.hour() % 12 + m_rad) / 12;
+                            container.innerHTML = `
+                                <div class="radial-clock">
+                                    <svg viewBox="0 0 100 100">
+                                        <circle class="bg-circle" cx="50" cy="50" r="45"></circle>
+                                        <circle class="progress-circle" cx="50" cy="50" r="45" style="stroke-dasharray: 283; stroke-dashoffset: ${283 * (1 - h_rad)}; stroke: var(--accent-secondary)"></circle>
+                                        <circle class="bg-circle" cx="50" cy="50" r="35"></circle>
+                                        <circle class="progress-circle" cx="50" cy="50" r="35" style="stroke-dasharray: 220; stroke-dashoffset: ${220 * (1 - m_rad)};"></circle>
+                                        <circle class="bg-circle" cx="50" cy="50" r="25"></circle>
+                                        <circle class="progress-circle" cx="50" cy="50" r="25" style="stroke-dasharray: 157; stroke-dashoffset: ${157 * (1 - s_rad)}; stroke: var(--accent-primary);"></circle>
+                                    </svg>
+                                </div>`;
+                            break;
+                        case 'digital-block':
+                        default:
+                             container.innerHTML = `
+                                <span class="clock-segment">${now.format('hh')}</span>
+                                <span class="clock-colon">:</span>
+                                <span class="clock-segment">${now.format('mm')}</span>
+                                <span class="clock-colon">:</span>
+                                <span class="clock-segment">${now.format('ss')}</span>
+                                <span style="font-size: 1.5rem; align-self: flex-end; margin-left: 0.5rem;">${now.format('A')}</span>
+                            `;
+                            break;
+                    }
+                },
+                historyLogHTML() {
+                    const history = App.state.history;
+                    let html = '<h3>Completed Tasks</h3>';
+                    if (history.completedTasks.length > 0) {
+                        html += history.completedTasks.map(task => `
+                            <div class="task-item completed" style="opacity: 0.8;">
+                                <div class="task-details">
+                                    <div class="task-title">${App.util.sanitizeHTML(task.title)}</div>
+                                    <div class="task-meta">Completed on ${dayjs(task.completedAt).format('MMM D, YYYY')}</div>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        html += '<p>No tasks completed yet.</p>';
+                    }
+
+                    html += '<h3 style="margin-top: 1.5rem;">Budget History</h3>';
+                     if (history.budgetPeriods.length > 0) {
+                        html += history.budgetPeriods.map(period => `
+                            <div class="task-item" style="opacity: 0.8;">
+                                <div class="task-details">
+                                    <div class="task-title">${dayjs(period.startDate).format('MMM D')} - ${dayjs(period.endDate).format('MMM D, YYYY')}</div>
+                                    <div class="task-meta">Spent ₱${period.totalSpent.toFixed(2)} of ₱${period.budget.toFixed(2)}</div>
+                                </div>
+                            </div>
+                        `).join('');
+                    } else {
+                        html += '<p>No budget periods have ended yet.</p>';
+                    }
+
+                    return html;
+                }
+            }
+        };
+
+        // Start the application
+        window.addEventListener('DOMContentLoaded', () => App.init());
+    </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+  "name": "AcademiaOS",
+  "short_name": "AcademiaOS",
+  "description": "A personal dashboard to manage your class schedule, tasks, and academic life.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0A1913",
+  "theme_color": "#0A1913",
+  "icons": [
+    {
+      "src": "icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
